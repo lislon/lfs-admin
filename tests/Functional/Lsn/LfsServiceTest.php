@@ -13,13 +13,26 @@ use Slim\App;
  */
 class LfsServiceTest extends \PHPUnit_Framework_TestCase {
 
+    public function testList() {
+        $s = new \Lsn\LfsServerService(new Docker(), ['buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data']);
+        $containerInfos = $s->list();
+    }
+
     public function testCreateServer() {
 
         $httpClient = DockerClient::createFromEnv();
-        
+
 
         $s = new \Lsn\LfsServerService(new Docker(), ['buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data']);
-        $s->create("6050", "0.6M", 6050, []);
+        $s->create([
+            'port' => 6050,
+            'version' => '0.6M',
+            'pereulok' => true,
+            'host' => 'very_test',
+            'admin' => 123,
+            'pass' => 123,
+            'welcome' => 'Hello!'
+        ]);
         
     }
 }
