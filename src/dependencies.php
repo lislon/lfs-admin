@@ -1,6 +1,8 @@
 <?php
 // DIC configuration
 
+use Docker\DockerClient;
+
 $container = $app->getContainer();
 
 // view renderer
@@ -18,8 +20,16 @@ $container['logger'] = function ($c) {
     return $logger;
 };
 
+$container['docker'] = function ($c) {
+
+    $httpClient = new \Lsn\DockerLogClientDecorator(DockerClient::createFromEnv(), $c->get('logger'));
+    $docker = new \Docker\Docker($httpClient);
+    return $docker;
+};
+
 $container['lfsServer'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $service = new \Lsn\LfsServerService(new \Docker\Docker(), $settings);
+    $xServer = new \Lsn\XServerService($c->get('docker'));
+    $service = new \Lsn\LfsServerService($c->get('docker'), $settings, $xServer);
     return $service;
 };

@@ -10,5 +10,4 @@ namespace Lsn;
 
 
 class LsnException extends \Exception {
-
 }

@@ -59,14 +59,29 @@ class LfsFilesGenerator
     ];
 
 
+    /**
+     * Removes lfs configuration files in given path
+     *
+     * @param $basePath
+     */
     public static function cleanFiles($basePath)
     {
-        @unlink($basePath.'/welcome.txt');
-        @unlink($basePath.'/tracks.txt');
-        @unlink($basePath.'/setup.cfg');
-        @unlink($basePath);
+        if (file_exists($basePath)) {
+            foreach (new \DirectoryIterator($basePath) as $dir) {
+                @unlink($dir->getPathname());
+            }
+            @rmdir($basePath);
+        }
     }
 
+
+    /**
+     * Generate lfs configuration files based on $cfg in directory $basePath
+     *
+     * @param $basePath Directory name where files are stored
+     * @param $cfg Server configuration associative array
+     * @throws LsnException
+     */
     public static function generateFiles($basePath, $cfg)
     {
         $lfsConfig = array_merge(

@@ -30,7 +30,7 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
      * @param array|object|null $requestData the request data
      * @return \Slim\Http\Response
      */
-    public function runApp($requestMethod, $requecstUri, $requestData = null)
+    public function runApp($requestMethod, $requestUri, $requestData = null)
     {
         // Create a mock environment for testing with
         $environment = Environment::mock(
