@@ -9,7 +9,15 @@
 namespace Lsn;
 
 
-class LfsFilesGenerator
+use Lsn\Exception\LsnException;
+
+/**
+ * Generates setup.cfg, welcome.txt, tracks.txt from array of parameters
+ *
+ * Class LfsFilesGenerator
+ * @package Lsn
+ */
+class LfsConfigManager
 {
     const defaultConfig = [
         'log' => 'log.log',
@@ -74,6 +82,41 @@ class LfsFilesGenerator
         }
     }
 
+    /**
+     * Reads LFS configs and return it as array
+     *
+     * @param $basePath
+     */
+    public static function readFiles($basePath)
+    {
+        $config = [];
+
+        $setupCfgPath = $basePath . "/setup.cfg";
+        $inF = fopen($setupCfgPath, "r");
+
+        if (!$inF) {
+            throw new LsnException("Can't open '$setupCfgPath'!");
+        }
+
+        try {
+            while (($line = fgets($inF)) !== false) {
+                if (preg_match("@^/([^=/]+)=(.*?)\s*$@", $line, $match)) {
+                    $config[$match[1]] = $match[2];
+                }
+            }
+
+            if (!empty($config['welcome']) && file_exists($basePath."/welcome.txt")) {
+                $config['welcome'] = file_get_contents($basePath."/welcome.txt");
+            }
+            if (!empty($config['tracks']) && file_exists($basePath."/tracks.txt")) {
+                $config['tracks'] = explode(PHP_EOL, file_get_contents($basePath."/tracks.txt"));
+            }
+
+        } finally {
+            fclose($inF);
+        }
+        return $config;
+    }
 
     /**
      * Generate lfs configuration files based on $cfg in directory $basePath
@@ -104,7 +147,7 @@ class LfsFilesGenerator
             throw new LsnException("Failed to write at '\"$basePath/welcome.cfg\"'");
         }
 
-        if (@file_put_contents("$basePath/tracks.txt", isset($cfg['tracks']) ? $cfg['tracks'] : '') === false) {
+        if (@file_put_contents("$basePath/tracks.txt", isset($cfg['tracks']) ? implode(PHP_EOL, (array)$cfg['tracks']) : '') === false) {
             throw new LsnException("Failed to write at '\"$basePath/tracks.cfg\"'");
         }
         // empty files for mapping

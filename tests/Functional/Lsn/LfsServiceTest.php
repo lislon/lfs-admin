@@ -1,9 +1,10 @@
 <?php
 
 namespace Tests\Functional\Lfs;
+
 use Docker\Docker;
 use Docker\DockerClient;
-use Lsn\DockerLogClientDecorator;
+use Lsn\Helper\DockerLogClientDecorator;
 use Lsn\LfsServerService;
 use Lsn\XServerService;
 use Monolog\Logger;

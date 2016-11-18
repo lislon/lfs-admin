@@ -10,7 +10,7 @@ $c['errorHandler'] = function ($c) {
     return function ($request, $response, $exception) use ($c) {
         $code = 500;
         $message = 'Internal server error';
-        if ($exception instanceof \Lsn\LsnException) {
+        if ($exception instanceof \Lsn\Exception\LsnException) {
             $code = 400;
             $message = $exception->getMessage();
             $c['logger']->addError($exception->getMessage()/*, ['trace' => $exception->getTraceAsString()]*/);

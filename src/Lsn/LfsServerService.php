@@ -9,7 +9,16 @@ use Docker\Docker;
 use Docker\API\Model\ContainerConfig;
 use Http\Client\Common\Exception\ClientErrorException;
 use Http\Client\Exception\HttpException;
+use Lsn\Exception\LsnDockerException;
+use Lsn\Exception\LsnException;
+use Lsn\Exception\LsnNotFoundException;
 
+/**
+ * Class controlling creation, starting and stopping of docker containers for LFS server.
+ *
+ * Class LfsServerService
+ * @package Lsn
+ */
 class LfsServerService
 {
     private $docker;
@@ -50,7 +59,7 @@ class LfsServerService
 
             // clean after ourself
             $configDir = $containerInfo->getConfig()->getLabels()['conf-dir'];
-            LfsFilesGenerator::cleanFiles("{$this->cfgBasePath}/$configDir");
+            LfsConfigManager::cleanFiles("{$this->cfgBasePath}/$configDir");
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
         }
@@ -188,7 +197,7 @@ class LfsServerService
                 "$port/udp" => new \ArrayObject()
             ]);
 
-            LfsFilesGenerator::generateFiles("{$this->cfgBasePath}/$configDir", $config);
+            LfsConfigManager::generateFiles("{$this->cfgBasePath}/$configDir", $config);
 
             $binds = [
                 "{$this->lfsBasePath}/$lfsVersion:/lfs",
@@ -207,7 +216,7 @@ class LfsServerService
             try {
                 $container = $containerManager->create($containerConfig);
             } catch (HttpException $e) {
-                LfsFilesGenerator::cleanFiles("{$this->cfgBasePath}/$configDir");
+                LfsConfigManager::cleanFiles("{$this->cfgBasePath}/$configDir");
                 throw $e;
             }
 

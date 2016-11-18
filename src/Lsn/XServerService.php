@@ -14,7 +14,15 @@ use Docker\API\Model\HostConfig;
 use Docker\Docker;
 use Docker\Manager\ContainerManager;
 use Http\Client\Exception\HttpException;
+use Lsn\Exception\LsnDockerException;
+use Lsn\Exception\LsnException;
 
+/**
+ * This class runs docker X11 Server for LFS servers.
+ *
+ * Class XServerService
+ * @package Lsn
+ */
 class XServerService
 {
     const CONTAINER_NAME = 'xserver';

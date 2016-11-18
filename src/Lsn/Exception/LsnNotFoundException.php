@@ -6,8 +6,10 @@
  * Time: 1:41 PM
  */
 
-namespace Lsn;
+namespace Lsn\Exception;
 
+
+use Lsn\Exception\LsnException;
 
 class LsnNotFoundException extends LsnException
 {

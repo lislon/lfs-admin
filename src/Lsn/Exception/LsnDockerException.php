@@ -6,9 +6,10 @@
  * Time: 12:16 PM
  */
 
-namespace Lsn;
+namespace Lsn\Exception;
 
 use Http\Client\Exception\HttpException;
+use Lsn\Exception\LsnException;
 use Psr\Http\Message\RequestInterface;
 
 /**

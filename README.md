@@ -86,6 +86,35 @@
 
  * port - номер порта (Обязательный)
  * version - номер Версии
+ * host
+ * pass
+ * admin
+ * mode
+ * usemaster
+ * track
+ * cars
+ * maxguests
+ * adminslots
+ * carsmax
+ * carsguest
+ * pps
+ * qual
+ * laps
+ * wind
+ * vote
+ * select
+ * autokick
+ * rstmin
+ * rstend
+ * midrace
+ * mustpit
+ * canreset
+ * fcv
+ * cruise
+ * start
+ * player
+ * welcome
+ * autosave
 
 ### Удаление сервера
 

@@ -22,7 +22,7 @@ $container['logger'] = function ($c) {
 
 $container['docker'] = function ($c) {
 
-    $httpClient = new \Lsn\DockerLogClientDecorator(DockerClient::createFromEnv(), $c->get('logger'));
+    $httpClient = new \Lsn\Helper\DockerLogClientDecorator(DockerClient::createFromEnv(), $c->get('logger'));
     $docker = new \Docker\Docker($httpClient);
     return $docker;
 };
@@ -31,5 +31,11 @@ $container['lfsServer'] = function ($c) {
     $settings = $c->get('settings')['docker'];
     $xServer = new \Lsn\XServerService($c->get('docker'));
     $service = new \Lsn\LfsServerService($c->get('docker'), $settings, $xServer);
+    return $service;
+};
+
+$container['lfsVersion'] = function ($c) {
+    $settings = $c->get('settings')['docker'];
+    $service = new \Lsn\LfsVersionService($settings);
     return $service;
 };

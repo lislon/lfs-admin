@@ -6,13 +6,19 @@
  * Time: 12:59 AM
  */
 
-namespace Lsn;
+namespace Lsn\Helper;
 
 
 use Docker\DockerClient;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Logs requests to docker.
+ *
+ * Class DockerLogClientDecorator
+ * @package Lsn\Helper
+ */
 class DockerLogClientDecorator extends DockerClient
 {
     private $logger;

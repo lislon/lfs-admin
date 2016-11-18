@@ -6,7 +6,7 @@
  * Time: 1:09 PM
  */
 
-namespace Lsn;
+namespace Lsn\Exception;
 
 
 class LsnException extends \Exception {
