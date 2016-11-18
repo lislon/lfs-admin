@@ -16,9 +16,10 @@ return [
             'level' => \Monolog\Logger::DEBUG,
         ],
 
+        'env' => 'testing',
+
         'docker' => [
             'buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data',
-            'isTesting' => false, // containers will be labeled as testing
         ]
 
     ],

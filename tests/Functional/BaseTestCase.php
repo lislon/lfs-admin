@@ -16,11 +16,31 @@ use Slim\Http\Environment;
 class BaseTestCase extends \PHPUnit_Framework_TestCase
 {
     /**
-     * Use middleware when running application?
-     *
-     * @var bool
+     * @return App
      */
-    protected $withMiddleware = true;
+    protected static function getApp()
+    {
+        // Use the application settings
+        $settings = require __DIR__ . '/../../src/settings.php';
+
+        // mark containers with test label
+        $settings['settings']['env'] = 'test';
+
+        // Instantiate the application
+        $app = new App($settings);
+
+        // Set up dependencies
+        require __DIR__ . '/../../src/dependencies.php';
+
+        // Register middleware
+
+        require __DIR__ . '/../../src/middleware.php';
+
+        // Register routes
+        require __DIR__ . '/../../src/routes.php';
+
+        return $app;
+    }
 
     /**
      * Process the application given a request method and URI
@@ -32,6 +52,8 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function runApp($requestMethod, $requestUri, $requestData = null)
     {
+        $app = self::getApp();
+
         // Create a mock environment for testing with
         $environment = Environment::mock(
             [
@@ -51,26 +73,6 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
         // Set up a response object
         $response = new Response();
 
-        // Use the application settings
-        $settings = require __DIR__ . '/../../src/settings.php';
-
-        // mark containers with test label
-        $settings['docker']['isTesting'] = true;
-
-        // Instantiate the application
-        $app = new App($settings);
-
-        // Set up dependencies
-        require __DIR__ . '/../../src/dependencies.php';
-
-        // Register middleware
-        if ($this->withMiddleware) {
-            require __DIR__ . '/../../src/middleware.php';
-        }
-
-        // Register routes
-        require __DIR__ . '/../../src/routes.php';
-
         // Process the application
         $response = $app->process($request, $response);
 
@@ -78,11 +80,12 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
         return $response;
     }
 
-    protected function assertResponse($expected, $response)
+    protected function assertResponse($expected, Response $response)
     {
         if ($expected != $response->getStatusCode()) {
             $error = json_decode($response->getBody(), true);
-            $this->fail($error['message']);
+
+            $this->assertEquals($expected, $response->getStatusCode(), isset($error['message']) ? $error['message'] : null);
         }
     }
 }

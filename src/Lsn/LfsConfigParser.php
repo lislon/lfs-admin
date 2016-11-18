@@ -98,7 +98,7 @@ class LfsConfigManager
     {
         $stat = [];
 
-        if (!($file = @file_get_contents($basePath."/host.txt", "r"))) {
+        if (!($file = @file_get_contents(glob($basePath."/host*.txt"), "r"))) {
             return null;
         }
 
@@ -124,7 +124,6 @@ class LfsConfigManager
 
         return $file;
     }
-
 
 
     /**

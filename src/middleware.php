@@ -16,6 +16,9 @@ $c['errorHandler'] = function ($c) {
             $c['logger']->addError($exception->getMessage()/*, ['trace' => $exception->getTraceAsString()]*/);
         } else {
             $c['logger']->addError($exception->getMessage());
+            if ($c->get('settings')['env'] != 'production') {
+                $message = $exception->getMessage();
+            }
         }
 
 

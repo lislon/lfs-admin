@@ -53,7 +53,7 @@ class XServerService
                 $this->createContainer();
                 $containerState = 'created';
             }
-            if ($containerState != 'running') {
+            if (!$containerState->getRunning()) {
                 $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
             }
         } catch (HttpException $e) {

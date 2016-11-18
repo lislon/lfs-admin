@@ -25,9 +25,8 @@ $app->get('/servers/{id}', function ($request, $response, $args) {
 });
 
 $app->get('/servers/{id}/logs', function ($request, $response, $args) {
-    $this->get('lfsServer')->getLogs($args['id']);
-    $this->logger->addNotice("Logs retrieved {$args['id']}");
-    return $response->withJson(new \ArrayObject());
+    $logs = $this->get('lfsServer')->getLogs($args['id']);
+    return $response->withJson($logs);
 });
 
 $app->patch('/servers/{id}', function ($request, $response, $args) {

@@ -14,6 +14,7 @@ use Http\Client\Exception\HttpException;
 use Lsn\Exception\LsnDockerException;
 use Lsn\Exception\LsnException;
 use Lsn\Exception\LsnNotFoundException;
+use Lsn\Helper\DockerUtils;
 
 /**
  * Class controlling creation, starting and stopping of docker containers for LFS server.
@@ -36,22 +37,22 @@ class LfsServerService
      * @param $dockerSettings
      * @param XServerService $displayService Service for running x11 server for LFS boxes
      */
-    public function __construct(Docker $docker, $dockerSettings, XServerService $displayService)
+    public function __construct(Docker $docker, $dockerSettings, XServerService $displayService, $env)
     {
         $this->docker = $docker;
         $this->dockerSettings = $dockerSettings;
         $this->lfsBasePath = $dockerSettings['buildPath']."/lfsdata";
         $this->cfgBasePath = $dockerSettings['buildPath']."/lfscfg";
-        $this->isTesting = $dockerSettings['isTesting'];
+        $this->isTesting = $env == 'test';
         $this->xServer = $displayService;
     }
+    
+    
 
     public function getLogs($containerId)
     {
         try {
-            $container = $this->docker->getContainerManager()->find($containerId);
-
-            return ['logs' => LfsConfigManager::readLog($this->getLfsConfigPath($container))];
+            return ['logs' => DockerUtils::readContainerFile($this->docker, $containerId, '/lfs/log.log')];
 
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
@@ -254,10 +255,11 @@ class LfsServerService
                 "$port/udp" => [["HostPort" => "$port"]]
             ]);
             $hostConfig->setVolumesFrom(["xserver"]);
-            $hostConfig->setRestartPolicy([
-                'Name' => 'unless-stopped',
-                'MaximumRetryCount' => 2,
-            ]);
+
+            $restartPolicy = new RestartPolicy();
+            $restartPolicy->setMaximumRetryCount(2);
+            $restartPolicy->setName('unless-stopped');
+            $hostConfig->setRestartPolicy($restartPolicy);
 
             $containerConfig->setHostConfig($hostConfig);
             $containerConfig->setExposedPorts([
@@ -273,7 +275,7 @@ class LfsServerService
                 "{$this->cfgBasePath}/$configDir/welcome.txt:/lfs/welcome.txt",
                 "{$this->cfgBasePath}/$configDir/tracks.txt:/lfs/tracks.txt",
 //                "{$this->cfgBasePath}/$configDir/host.txt:/lfs/host{$port}.txt",
-                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.log",
+//                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.log",
             ];
 
             if (!empty($config['pereulok'])) {
@@ -349,6 +351,22 @@ class LfsServerService
             }
         }
         return false;
+    }
+    
+    public function stopAllTestContainers()
+    {
+        $containerInfos = $this->docker->getContainerManager()->findAll([
+            'filters' => json_encode([
+                'label' => ['lfs-server', 'is-testing'],
+                'status' => ['created', 'restarting', 'running', 'paused', 'exited', 'dead'],
+            ])
+        ]);
+
+        foreach ($containerInfos as $containerInfo) {
+            if ($containerInfo->getState() == 'running') {
+                $this->stop($containerInfo->getId());
+            }
+        }
     }
 
 }

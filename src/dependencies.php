@@ -30,7 +30,7 @@ $container['docker'] = function ($c) {
 $container['lfsServer'] = function ($c) {
     $settings = $c->get('settings')['docker'];
     $xServer = new \Lsn\XServerService($c->get('docker'));
-    $service = new \Lsn\LfsServerService($c->get('docker'), $settings, $xServer);
+    $service = new \Lsn\LfsServerService($c->get('docker'), $settings, $xServer, $c->get('settings')['env']);
     return $service;
 };
 
