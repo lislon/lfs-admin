@@ -45,7 +45,7 @@
 
 Запрос:
 
-    GET http://example.org/servers
+    GET http://localhost:8080/servers/34c8fb2b5c07
 
 Ответ:
 
@@ -57,6 +57,32 @@
     }
 
 Параметры ответа: такие же как и в списке серверов.
+
+### Получить статистику по запущенному серверу
+
+
+Запрос:
+
+    GET http://localhost:8080/servers/34c8fb2b5c07/stats
+
+Ответ:
+
+    HTTP/1.1 200 OK
+
+    {
+      'lfs': '0.6M',
+      'status': 'online',
+      'guests': '0',
+      'maxguests': '38',
+      'host': '^5LSN ^0EVENTS PRACTICE',
+      'pass': 'secret',
+      'usemaster': 'yes',
+      'trackcfg': 'AU4',
+      'cars': '00100000001000000000',
+      'qual': '0',
+      'laps': '1',
+      'conn': '^0EVENTS ^3PRACTICE'
+    }
 
 ### Создать сервер
 

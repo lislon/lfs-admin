@@ -29,6 +29,11 @@ $app->get('/servers/{id}/logs', function ($request, $response, $args) {
     return $response->withJson($logs);
 });
 
+$app->get('/servers/{id}/stats', function ($request, $response, $args) {
+    $logs = $this->get('lfsServer')->getStats($args['id']);
+    return $response->withJson($logs);
+});
+
 $app->patch('/servers/{id}', function ($request, $response, $args) {
     $result = $this->get('lfsServer')->patch($args['id'], $request->getParsedBody());
     return $response->withJson($result);

@@ -47,8 +47,6 @@ class LfsServerService
         $this->xServer = $displayService;
     }
     
-    
-
     public function getLogs($containerId)
     {
         try {
@@ -58,6 +56,22 @@ class LfsServerService
             throw new LsnDockerException($e->getMessage(), $e);
         }
     }
+//
+//    public function getStats($containerId)
+//    {
+//        $info = $this->get($containerId);
+//
+//        try {
+//            $info[]
+//
+//            $statsContents = DockerUtils::readContainerFile($this->docker, $containerId, '/lfs/host.log');
+//
+//            return LfsConfigParser::parseStats($statsContents);
+//
+//        } catch (HttpException $e) {
+//            throw new LsnDockerException($e->getMessage(), $e);
+//        }
+//    }
 
 
     /**
@@ -81,7 +95,7 @@ class LfsServerService
             $containerManager->remove($containerId);
 
             // clean after ourself
-            LfsConfigManager::cleanFiles($this->getLfsConfigPath($container));
+            LfsConfigParser::cleanFiles($this->getLfsConfigPath($container));
 
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
@@ -100,8 +114,6 @@ class LfsServerService
                 return [
                     'id' => $container->getId(),
                     'state' => $container->getState(),
-                    'guests' => null,
-                    'host' => null,
                 ];
             }, $containerInfos);
         } catch (HttpException $e) {
@@ -133,7 +145,7 @@ class LfsServerService
 
             $result = array_merge(
                 $result,
-                LfsConfigManager::readConfig($this->getLfsConfigPath($container)));
+                LfsConfigParser::readConfig($this->getLfsConfigPath($container)));
             return $result;
 
         } catch (HttpException $e) {
@@ -196,14 +208,14 @@ class LfsServerService
             $container = $this->docker->getContainerManager()->find($containerId);
 
             $basePath = $this->getLfsConfigPath($container);
-            $originalConfig = LfsConfigManager::readConfig($basePath);
+            $originalConfig = LfsConfigParser::readConfig($basePath);
 
             if (($param = $this->getParamThatRequriresContainerRecreation($config, $originalConfig)) !== false) {
                 throw new LsnException("Changing {$param} parameter require migration method", 409);
             }
 
             $newConfig = array_merge($originalConfig, $config);
-            LfsConfigManager::writeConfig($basePath, $newConfig);
+            LfsConfigParser::writeConfig($basePath, $newConfig);
             return $newConfig;
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
@@ -267,7 +279,7 @@ class LfsServerService
                 "$port/udp" => new \ArrayObject()
             ]);
 
-            LfsConfigManager::writeConfig("{$this->cfgBasePath}/$configDir", $config);
+            LfsConfigParser::writeConfig("{$this->cfgBasePath}/$configDir", $config);
 
             $binds = [
                 "{$this->lfsBasePath}/$lfsImage:/lfs",
@@ -288,7 +300,7 @@ class LfsServerService
             try {
                 $container = $containerManager->create($containerConfig);
             } catch (HttpException $e) {
-                LfsConfigManager::cleanFiles("{$this->cfgBasePath}/$configDir");
+                LfsConfigParser::cleanFiles("{$this->cfgBasePath}/$configDir");
                 throw $e;
             }
 

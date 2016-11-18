@@ -9,13 +9,13 @@
 namespace Tests\Unit\Lsn;
 
 
-use Lsn\LfsConfigManager;
+use Lsn\LfsConfigParser;
 
 class LfsConfigManagerTest extends \PHPUnit_Framework_TestCase
 {
     public function testReadConfig()
     {
-        $config = LfsConfigManager::readConfig(__DIR__."/_fixtures");
+        $config = LfsConfigParser::readConfig(__DIR__."/_fixtures");
         $this->assertEquals("baraban2", $config['admin']);
         $this->assertEquals(["AU1", "AU1x"], $config['tracks']);
     }

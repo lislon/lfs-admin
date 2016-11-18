@@ -17,7 +17,7 @@ use Lsn\Exception\LsnException;
  * Class LfsFilesGenerator
  * @package Lsn
  */
-class LfsConfigManager
+class LfsConfigParser
 {
     const defaultConfig = [
         'log' => 'log.log',
@@ -91,18 +91,14 @@ class LfsConfigManager
     /**
      * Read's server host.txt file.
      *
-     * @param $basePath
+     * @param $contents string hosts.txt contents
      * @return array|null Key-value config values, or null when host.txt is not found
      */
-    public static function readStat($basePath)
+    public static function parseStats($contents)
     {
         $stat = [];
 
-        if (!($file = @file_get_contents(glob($basePath."/host*.txt"), "r"))) {
-            return null;
-        }
-
-        foreach (explode(PHP_EOL, $file) as $line) {
+        foreach (explode(PHP_EOL, $contents) as $line) {
             list($name, $val) = explode("=", $line);
             $stat[$name] = $val;
         }
