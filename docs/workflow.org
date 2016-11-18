@@ -1,0 +1,41 @@
+*
+#+BEGIN_SRC plantuml :file img/lifecicle.png
+title Жизненный цикл сервера
+note right: Example Function
+(*)--> "GET /servers"
+--> "POST /servers"
+--> "GET /servers/34c8fb2b5c07"
+--> "GET /servers"
+-> "Step 3"
+--> "Step 4"
+--> === STARTLOOP ===
+note top: For each element in the array
+if "Are we done?" then
+  -> [no] "Do this"
+  -> "Do that"
+  note bottom: Important note\ngoes here
+  -up-> "Increment counters"
+  --> === STARTLOOP ===
+else
+  --> [yes] === ENDLOOP ===
+endif
+--> "Last Step"
+--> (*)
+#+END_SRC
+[[file:lifecicle.png]]
+
+* Жизненный цикл сервера
+#+BEGIN_SRC plantuml :file img/state.png
+scale 600 width
+title Жизненный цикл сервера
+stopped : {id: abc123 }
+[*] -right-> stopped : POST /servers
+stopped -down-> restarting : POST /servers/{id}/start
+restarting -right-> running
+running --> stopped: POST /servers/{id}/stop
+stopped -right-> [*]: DELETE /servers/{id}
+#+END_SRC
+
+
+#+RESULTS:
+[[file:img/state.png]]
