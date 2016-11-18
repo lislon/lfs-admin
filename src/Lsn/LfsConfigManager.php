@@ -83,11 +83,52 @@ class LfsConfigManager
     }
 
     /**
-     * Reads LFS configs and return it as array
+     * Read's server host.txt file.
      *
      * @param $basePath
+     * @return array|null Key-value config values, or null when host.txt is not found
      */
-    public static function readFiles($basePath)
+    public static function readStat($basePath)
+    {
+        $stat = [];
+
+        if (!($file = @file_get_contents($basePath."/host.txt", "r"))) {
+            return null;
+        }
+
+        foreach (explode(PHP_EOL, $file) as $line) {
+            list($name, $val) = explode("=", $line);
+            $stat[$name] = $val;
+        }
+
+        return $stat;
+    }
+
+    /**
+     * Read's server logs.txt file.
+     *
+     * @param $basePath
+     * @return array|null Key-value config values, or null when host.txt is not found
+     */
+    public static function readLog($basePath)
+    {
+        if (!($file = @file_get_contents($basePath."/log.txt", "r"))) {
+            return null;
+        }
+
+        return $file;
+    }
+
+
+
+    /**
+     * Reads LFS configs and return it as array.
+     *
+     * @param $basePath
+     * @return array
+     * @throws LsnException when setup.cfg not found
+     */
+    public static function readConfig($basePath)
     {
         $config = [];
 
@@ -121,11 +162,11 @@ class LfsConfigManager
     /**
      * Generate lfs configuration files based on $cfg in directory $basePath
      *
-     * @param $basePath Directory name where files are stored
-     * @param $cfg Server configuration associative array
+     * @param $basePath string Directory name where files are stored
+     * @param $cfg array Server configuration associative array
      * @throws LsnException
      */
-    public static function generateFiles($basePath, $cfg)
+    public static function writeConfig($basePath, $cfg)
     {
         $lfsConfig = array_merge(
             self::defaultConfig,

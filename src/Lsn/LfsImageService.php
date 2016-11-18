@@ -9,12 +9,12 @@
 namespace Lsn;
 
 /**
- * Lists available versions of servers.
+ * Lists available images of servers.
  *
- * Class LfsVersionService
+ * Class LfsImageService
  * @package Lsn
  */
-class LfsVersionService
+class LfsImageService
 {
     private $lfsBasePath;
 
@@ -24,7 +24,7 @@ class LfsVersionService
         $this->lfsBasePath = $dockerSettings['buildPath']."/lfsdata";
     }
 
-    public function getServerVersions()
+    public function getImages()
     {
         $versions = [];
 

@@ -52,7 +52,7 @@ $app->delete('/servers/{id}', function ($request, $response, $args) {
     return $response->withJson(new \ArrayObject());
 });
 
-$app->get('/versions', function ($request, $response, $args) {
-    $list = $this->get('lfsServer')->listServers();
+$app->get('/server-images', function ($request, $response, $args) {
+    $list = $this->get('lfsImage')->listServers();
     return $response->withJson($list);
 });

@@ -153,7 +153,7 @@ class LfsServerService
      *
      * @param $config
      *  ports - required
-     *  version - required
+     *  image - required
      * @return string id of container
      * @throws LsnException
      */
@@ -162,10 +162,10 @@ class LfsServerService
         try {
             $this->xServer->runIfStopped();
 
-            $lfsVersion = $config['version'];
+            $lfsImage = $config['image'];
             $port = $config['port'];
             $configDir = $port . '-' . time();
-            $this->validateVersion($lfsVersion);
+            $this->validateImage($lfsImage);
 
 
             //        if ($this->isContainerExists($this->getContainerName($serverName))) {
@@ -180,7 +180,7 @@ class LfsServerService
             $containerConfig->setLabels(new \ArrayObject([
                 'lfs-server' => 'true',
                 'conf-dir' => $configDir,
-                'lfs-version' => $lfsVersion,
+                'lfs-image' => $lfsImage,
             ]));
 
 
@@ -197,10 +197,10 @@ class LfsServerService
                 "$port/udp" => new \ArrayObject()
             ]);
 
-            LfsConfigManager::generateFiles("{$this->cfgBasePath}/$configDir", $config);
+            LfsConfigManager::writeConfig("{$this->cfgBasePath}/$configDir", $config);
 
             $binds = [
-                "{$this->lfsBasePath}/$lfsVersion:/lfs",
+                "{$this->lfsBasePath}/$lfsImage:/lfs",
                 "{$this->cfgBasePath}/$configDir/setup.cfg:/lfs/setup.cfg",
                 "{$this->cfgBasePath}/$configDir/welcome.txt:/lfs/welcome.txt",
                 "{$this->cfgBasePath}/$configDir/tracks.txt:/lfs/tracks.txt",
@@ -227,17 +227,17 @@ class LfsServerService
     }
 
     /**
-     * @param $lfsVersion
+     * @param $lfsImage
      * @throws LsnException
      */
-    private function validateVersion($lfsVersion)
+    private function validateImage($lfsImage)
     {
-        if (!preg_match("/^[\\w-]*\\.[\\w-]*$/", $lfsVersion)) {
-            throw new LsnException("Lfs version have wrong characters [A-Z0-9.] is allowed");
+        if (!preg_match("/^[\\w-]*\\.[\\w-]*$/", $lfsImage)) {
+            throw new LsnException("Lfs image have wrong characters [A-Z0-9.] is allowed");
         }
-        $filename = $this->lfsBasePath."/".$lfsVersion;
+        $filename = $this->lfsBasePath."/".$lfsImage;
         if (!file_exists($filename)) {
-            throw new LsnException("Lfs version '$lfsVersion' is not found ($filename not exists)");
+            throw new LsnException("Lfs image '$lfsImage' is not found ($filename not exists)");
         }
     }
 

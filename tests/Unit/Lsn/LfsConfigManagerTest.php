@@ -13,9 +13,9 @@ use Lsn\LfsConfigManager;
 
 class LfsConfigManagerTest extends \PHPUnit_Framework_TestCase
 {
-    public function testReadFiles()
+    public function testReadConfig()
     {
-        $config = LfsConfigManager::readFiles(__DIR__."/_fixtures");
+        $config = LfsConfigManager::readConfig(__DIR__."/_fixtures");
         $this->assertEquals("baraban2", $config['admin']);
         $this->assertEquals(["AU1", "AU1x"], $config['tracks']);
     }
