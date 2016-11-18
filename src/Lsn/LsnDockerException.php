@@ -8,6 +8,7 @@
 
 namespace Lsn;
 
+use Http\Client\Exception\HttpException;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -19,9 +20,9 @@ class LsnDockerException extends LsnException
 {
     private $request;
 
-    public function __construct($message, RequestInterface $request)
+    public function __construct($message, HttpException $exception)
     {
-        $this->request = $request;
+        $this->request = $exception->getRequest();
         parent::__construct($message);
     }
     

@@ -1,26 +1,68 @@
-# Slim Framework 3 Skeleton Application
+# LFS Server Manager
 
-Use this skeleton application to quickly setup and start working on a new Slim Framework 3 application. This application uses the latest Slim 3 with the PHP-View template renderer. It also uses the Monolog logger.
+Данная программа позволяет управлять LFS серверами через HTTP API.
 
-This skeleton application was built for Composer. This makes setting up a new Slim Framework application quick and easy.
+Поддерживаемые функции:
+ * Создание/удаление севрера
+ * Получение списка серверов
+ * Проверка состояние сервера
+ * Запуск/остановку сервера
+ * Редактирование параметров setup.cfg/welcome.txt
+ * (Не реализовано) Обновление версии сервера
 
-## Install the Application
+## Примеры использования API
 
-Run this command from the directory in which you want to install your new Slim Framework application.
+### Получить все сервера
 
-    php composer.phar create-project slim/slim-skeleton [my-app-name]
+Запрос:
 
-Replace `[my-app-name]` with the desired directory name for your new application. You'll want to:
+   GET http://example.org/servers
 
-* Point your virtual host document root to your new application's `public/` directory.
-* Ensure `logs/` is web writeable.
+Ответ:
 
-To run the application in development, you can also run this command. 
+    [
+        {
+            id: '34c8fb2b5c07'
+            state: 'running',
+        },
+        {
+            id: '34p8so2o5p07'
+            state: 'running',
+        }
+    ]
+    
+    
+Параметры ответа:
 
-	php composer.phar start
+ * `id` - Идентификатор сервера
+ * `state` - Состояние сервера. Возможны следующие значения см. [#Состояния сервера]
 
-Run this command to run the test suite
 
-	php composer.phar test
+id
+: Идентификатор сервера
 
-That's it! Now go build something cool.
+state
+: Состояние сервера. Возможны следующие значения см. 
+
+### Создание сервера
+
+`name` это имя сервера.
+
+   POST http://localhost:8080/servers/<name>
+   
+   {
+      port: 6050,
+      version: '0.6M',
+      pereulok: true,
+      host: '^7LSN TEST',
+      welcome: '... welcome text ...',
+      track: 'AU1'
+   }
+
+## Установка приложения
+
+### Состояния сервера
+
+ * running - Сервер запущен
+ * restarting - Сервер перезагружается
+ * created - Сервер остановлен

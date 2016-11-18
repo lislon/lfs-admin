@@ -52,7 +52,7 @@ class LfsServerService
             $configDir = $containerInfo->getConfig()->getLabels()['conf-dir'];
             LfsFilesGenerator::cleanFiles("{$this->cfgBasePath}/$configDir");
         } catch (HttpException $e) {
-            throw new LsnDockerException($e->getMessage(), $e->getRequest());
+            throw new LsnDockerException($e->getMessage(), $e);
         }
     }
 
@@ -73,7 +73,20 @@ class LfsServerService
                 ];
             }, $containerInfos);
         } catch (HttpException $e) {
-            throw new LsnDockerException($e->getMessage(), $e->getRequest());
+            throw new LsnDockerException($e->getMessage(), $e);
+        }
+    }
+
+    public function get($containerId)
+    {
+        try {
+            $currentInfo = $this->docker->getContainerManager()->find($containerId);
+        } catch (HttpException $e) {
+            if ($e->getCode() == 404) {
+                throw new LsnNotFoundException("Container with id = $containerId not found");
+            } else {
+                throw new LsnDockerException("Fail to get container $containerId", $e);
+            }
         }
     }
 
