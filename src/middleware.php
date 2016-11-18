@@ -21,7 +21,7 @@ $c['errorHandler'] = function ($c) {
 
         return $c['response']->withStatus($code)
             ->withHeader('Content-Type', 'application/json')
-            ->withJson(['status' => $code, 'errors' => ['message' => $message ]]);
+            ->withJson(['status' => $code, 'message' => $message ]);
     };
 };
 

@@ -30,7 +30,7 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
      * @param array|object|null $requestData the request data
      * @return \Slim\Http\Response
      */
-    public function runApp($requestMethod, $requestUri, $requestData = null)
+    protected function runApp($requestMethod, $requestUri, $requestData = null)
     {
         // Create a mock environment for testing with
         $environment = Environment::mock(
@@ -54,6 +54,9 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
         // Use the application settings
         $settings = require __DIR__ . '/../../src/settings.php';
 
+        // mark containers with test label
+        $settings['docker']['isTesting'] = true;
+
         // Instantiate the application
         $app = new App($settings);
 
@@ -73,5 +76,13 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
 
         // Return the response
         return $response;
+    }
+
+    protected function assertResponse($expected, $response)
+    {
+        if ($expected != $response->getStatusCode()) {
+            $error = json_decode($response->getBody(), true);
+            $this->fail($error['message']);
+        }
     }
 }

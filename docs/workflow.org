@@ -26,7 +26,6 @@ endif
 
 * Жизненный цикл сервера
 #+BEGIN_SRC plantuml :file img/state.png
-scale 600 width
 title Жизненный цикл сервера
 stopped : {id: abc123 }
 [*] -right-> stopped : POST /servers

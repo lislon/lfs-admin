@@ -17,7 +17,8 @@ return [
         ],
 
         'docker' => [
-            'buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data'
+            'buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data',
+            'isTesting' => false, // containers will be labeled as testing
         ]
 
     ],

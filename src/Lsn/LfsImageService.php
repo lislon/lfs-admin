@@ -29,7 +29,7 @@ class LfsImageService
         $versions = [];
 
         foreach (new \DirectoryIterator($this->lfsBasePath) as $path) {
-            if ($path->isDir()) {
+            if ($path->isDir() && !$path->isDot() && !$path->isFile() && file_exists($path->getPathname()."/setup.cfg")) {
                 $versions[] = $path->getFilename();
             }
         }

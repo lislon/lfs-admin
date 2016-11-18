@@ -4,7 +4,9 @@ namespace Lsn;
 
 use Docker\API\Model\Container;
 use Docker\API\Model\ContainerInfo;
+use Docker\API\Model\ContainerState;
 use Docker\API\Model\HostConfig;
+use Docker\API\Model\RestartPolicy;
 use Docker\Docker;
 use Docker\API\Model\ContainerConfig;
 use Http\Client\Common\Exception\ClientErrorException;
@@ -26,6 +28,7 @@ class LfsServerService
     private $lfsBasePath;
     private $cfgBasePath;
     private $xServer;
+    private $isTesting;
 
         /**
      * LfsServerService constructor.
@@ -39,7 +42,20 @@ class LfsServerService
         $this->dockerSettings = $dockerSettings;
         $this->lfsBasePath = $dockerSettings['buildPath']."/lfsdata";
         $this->cfgBasePath = $dockerSettings['buildPath']."/lfscfg";
+        $this->isTesting = $dockerSettings['isTesting'];
         $this->xServer = $displayService;
+    }
+
+    public function getLogs($containerId)
+    {
+        try {
+            $container = $this->docker->getContainerManager()->find($containerId);
+
+            return ['logs' => LfsConfigManager::readLog($this->getLfsConfigPath($container))];
+
+        } catch (HttpException $e) {
+            throw new LsnDockerException($e->getMessage(), $e);
+        }
     }
 
 
@@ -52,14 +68,20 @@ class LfsServerService
     public function delete($containerId)
     {
         try {
-            $containerInfo = $this->docker->getContainerManager()->find($containerId);
+            $container = $this->docker->getContainerManager()->find($containerId);
+
+
+            // Stop container if necessary
+            if ($this->getStateFromContainer($container) != 'stopped') {
+                throw new LsnException("Server should be stopped prior to deleting", 409);
+            }
 
             $containerManager = $this->docker->getContainerManager();
             $containerManager->remove($containerId);
 
             // clean after ourself
-            $configDir = $containerInfo->getConfig()->getLabels()['conf-dir'];
-            LfsConfigManager::cleanFiles("{$this->cfgBasePath}/$configDir");
+            LfsConfigManager::cleanFiles($this->getLfsConfigPath($container));
+
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
         }
@@ -86,10 +108,33 @@ class LfsServerService
         }
     }
 
+    private function getStateFromContainer(Container $container) {
+        $state = $container->getState();
+        if ($state->getRunning()) {
+            return 'running';
+        }
+        if ($state->getRestarting()) {
+            return 'restarting';
+        }
+        return 'stopped';
+    }
+
     public function get($containerId)
     {
         try {
-            $currentInfo = $this->docker->getContainerManager()->find($containerId);
+            $container = $this->docker->getContainerManager()->find($containerId);
+            $result = [
+                'id'    => $container->getId(),
+                'state' => $this->getStateFromContainer($container),
+                'pereulok' => !empty($container->getConfig()->getLabels()['lfs-pereulok']),
+                'image' => $container->getConfig()->getLabels()['lfs-image'],
+            ];
+
+            $result = array_merge(
+                $result,
+                LfsConfigManager::readConfig($this->getLfsConfigPath($container)));
+            return $result;
+
         } catch (HttpException $e) {
             if ($e->getCode() == 404) {
                 throw new LsnNotFoundException("Container with id = $containerId not found");
@@ -106,6 +151,7 @@ class LfsServerService
             $this->docker->getContainerManager()->start($containerId);
         } catch (HttpException $e) {
 
+            // Try a bit to find a reason why server is not starting:
             // Check if we port is busy
             if ($e->getCode() == 500) {
                 try {
@@ -143,9 +189,24 @@ class LfsServerService
         }
     }
 
-    public function update($containerId, $config)
+    public function patch($containerId, $config)
     {
-        throw new LsnException("Not implemented");
+        try {
+            $container = $this->docker->getContainerManager()->find($containerId);
+
+            $basePath = $this->getLfsConfigPath($container);
+            $originalConfig = LfsConfigManager::readConfig($basePath);
+
+            if (($param = $this->getParamThatRequriresContainerRecreation($config, $originalConfig)) !== false) {
+                throw new LsnException("Changing {$param} parameter require migration method", 409);
+            }
+
+            $newConfig = array_merge($originalConfig, $config);
+            LfsConfigManager::writeConfig($basePath, $newConfig);
+            return $newConfig;
+        } catch (HttpException $e) {
+            throw new LsnDockerException($e->getMessage(), $e);
+        }
     }
 
     /**
@@ -177,12 +238,15 @@ class LfsServerService
             $containerConfig = new ContainerConfig();
             $containerConfig->setImage('monowine');
             $containerConfig->setWorkingDir("/lfs");
-            $containerConfig->setLabels(new \ArrayObject([
+            $labels = [
                 'lfs-server' => 'true',
                 'conf-dir' => $configDir,
                 'lfs-image' => $lfsImage,
-            ]));
+            ];
 
+            if ($this->isTesting) {
+                $labels['is-testing'] = 'yes';
+            }
 
             $hostConfig = new HostConfig();
             $hostConfig->setPortBindings([
@@ -190,6 +254,10 @@ class LfsServerService
                 "$port/udp" => [["HostPort" => "$port"]]
             ]);
             $hostConfig->setVolumesFrom(["xserver"]);
+            $hostConfig->setRestartPolicy([
+                'Name' => 'unless-stopped',
+                'MaximumRetryCount' => 2,
+            ]);
 
             $containerConfig->setHostConfig($hostConfig);
             $containerConfig->setExposedPorts([
@@ -204,14 +272,16 @@ class LfsServerService
                 "{$this->cfgBasePath}/$configDir/setup.cfg:/lfs/setup.cfg",
                 "{$this->cfgBasePath}/$configDir/welcome.txt:/lfs/welcome.txt",
                 "{$this->cfgBasePath}/$configDir/tracks.txt:/lfs/tracks.txt",
-                "{$this->cfgBasePath}/$configDir/host.txt:/lfs/host{$port}.txt",
-                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.txt",
+//                "{$this->cfgBasePath}/$configDir/host.txt:/lfs/host{$port}.txt",
+                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.log",
             ];
 
             if (!empty($config['pereulok'])) {
                 $binds[] = "{$this->lfsBasePath}/lfspLauncher.exe:/lfs/LFSP.exe";
+                $labels['lfs-pereulok'] = 'yes';
             }
 
+            $containerConfig->setLabels(new \ArrayObject($labels));
             $hostConfig->setBinds($binds);
             try {
                 $container = $containerManager->create($containerConfig);
@@ -256,4 +326,30 @@ class LfsServerService
         return $containerInfos;
     }
 
+    /**
+     * @param $container Container
+     * @return string
+     */
+    private function getLfsConfigPath(Container $container)
+    {
+        return $this->cfgBasePath . "/" . $container->getConfig()->getLabels()['conf-dir'];
+    }
+
+    /**
+     * @param $config
+     * @param $originalConfig
+     */
+    private function getParamThatRequriresContainerRecreation($config, $originalConfig)
+    {
+        $paramsRequireContainerRecreation = ['image', 'pereulok', 'port'];
+
+        foreach ($paramsRequireContainerRecreation as $param) {
+            if (isset($config[$param]) && !(isset($originalConfig[$param]) || $config[$param] != $originalConfig[$param])) {
+                return $param;
+            }
+        }
+        return false;
+    }
+
 }
+

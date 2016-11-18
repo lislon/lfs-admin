@@ -34,7 +34,13 @@ class LfsConfigManager
         'autosave' => 0,
     ];
 
-    const allowParams = [
+    const validExtraParams = [
+        'pereulok',
+        'image'
+    ];
+
+    const validLfsParams = [
+        "host",
         "port",
         "pass",
         "admin",
@@ -142,7 +148,10 @@ class LfsConfigManager
         try {
             while (($line = fgets($inF)) !== false) {
                 if (preg_match("@^/([^=/]+)=(.*?)\s*$@", $line, $match)) {
-                    $config[$match[1]] = $match[2];
+                    // stip out log parameters
+                    if (in_array($match[1], self::validLfsParams)) {
+                        $config[$match[1]] = $match[2];
+                    }
                 }
             }
 
@@ -168,15 +177,15 @@ class LfsConfigManager
      */
     public static function writeConfig($basePath, $cfg)
     {
-        $lfsConfig = array_merge(
-            self::defaultConfig,
-            array_filter($cfg,
-                function($key)
-                {
-                    return in_array($key, self::allowParams);
-                }, ARRAY_FILTER_USE_KEY)
-        );
+        $lfsConfig = self::defaultConfig;
 
+        foreach ($cfg as $key => $value) {
+            if (in_array($key, self::validLfsParams)) {
+                $lfsConfig[$key] = $value;
+            } else if (!in_array($key, self::validExtraParams)) {
+                throw new LsnException("Parameter '$cfg' is not recognized");
+            }
+        }
 
         if (!file_exists($basePath)) {
             if (!@mkdir($basePath, 0775, true)) {
