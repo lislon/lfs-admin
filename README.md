@@ -1,6 +1,7 @@
 # LFS Server Manager
 
-Данная программа позволяет управлять LFS серверами через HTTP API.
+Данная программа позволяет управлять группой серверов LFS (Live for speed)
+запущенных в Docker
 
 Поддерживаемые функции:
  * Создание/удаление севрера
@@ -12,11 +13,11 @@
 
 ## Примеры использования API
 
-### Получить все сервера
+### Получить список серверов
 
 Запрос:
 
-   GET http://example.org/servers
+    GET http://localhost:8080/servers
 
 Ответ:
 
@@ -34,35 +35,91 @@
     
 Параметры ответа:
 
- * `id` - Идентификатор сервера
- * `state` - Состояние сервера. Возможны следующие значения см. [#Состояния сервера]
+ * id - Идентификатор сервера
+ * state - Состояние сервера. Возможны следующие значения см. [#Состояния сервера]
+    * `running` - запущен
+    * `restarting` - перезагружается
+    * `created` - остановлен
 
+### Получить информацию об одном сервере
 
-id
-: Идентификатор сервера
+Запрос:
 
-state
-: Состояние сервера. Возможны следующие значения см. 
+    GET http://example.org/servers
+
+Ответ:
+
+    HTTP/1.1 200 OK
+
+    {
+        id: '34c8fb2b5c07'
+        state: 'running',
+    }
+
+Параметры ответа: такие же как и в списке серверов.
 
 ### Создание сервера
 
-`name` это имя сервера.
+Запрос:
 
-   POST http://localhost:8080/servers/<name>
-   
-   {
-      port: 6050,
-      version: '0.6M',
-      pereulok: true,
-      host: '^7LSN TEST',
-      welcome: '... welcome text ...',
-      track: 'AU1'
-   }
+    POST http://localhost:8080/servers
+    Content-Type: application/json
 
-## Установка приложения
+    {
+        port: 6050,
+        version: '0.6M',
+        pereulok: true,
+        host: '^7LSN TEST',
+        welcome: '... welcome text ...',
+        track: 'AU1'
+    }
 
-### Состояния сервера
+Ответ:
 
- * running - Сервер запущен
- * restarting - Сервер перезагружается
- * created - Сервер остановлен
+    HTTP/1.1 201 OK
+    {
+        id: '34c8fb2b5c07'
+    }
+
+
+Параметры запроса:
+
+ * port - номер порта (Обязательный)
+ * version - номер Версии
+
+### Удаление сервера
+
+Запрос:
+
+    DELETE http://localhost:8080/servers/34c8fb2b5c07
+
+Ответ:
+
+    HTTP/1.1 204 No Content
+
+### Запуск/остановка сервера
+
+Запрос:
+
+    PATCH http://localhost:8080/servers/34c8fb2b5c07
+    Content-Type: application/json
+
+    {
+        state: 'running'
+    }
+
+Ответ:
+
+    HTTP/1.1 200 OK
+
+
+### Рестарт сервера
+
+Запрос:
+
+    POST http://localhost:8080/servers/34c8fb2b5c07/restart
+
+Ответ:
+
+    HTTP/1.1 200 OK
+

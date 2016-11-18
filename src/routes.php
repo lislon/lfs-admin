@@ -25,9 +25,10 @@ $app->patch('/servers/{id}', function ($request, $response, $args) {
     return $response->withJson(new \ArrayObject());
 });
 
-$app->post('/servers/{id}/stop', function ($request, $response, $args) {
+$app->post('/servers/{id}/restart', function ($request, $response, $args) {
     $this->get('lfsServer')->stop($args['id']);
-    $this->logger->addNotice("Server stopped {$args['id']}");
+    $this->get('lfsServer')->start($args['id']);
+    $this->logger->addNotice("Server restarted {$args['id']}");
     return $response->withJson(new \ArrayObject());
 });
 
