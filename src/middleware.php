@@ -28,10 +28,22 @@ $c['errorHandler'] = function ($c) {
     };
 };
 
-$app->add(function (ServerRequestInterface $request, $response, $next) {
+$c['phpErrorHandler'] = function ($c) {
+    return function ($request, $response, $error) use ($c) {
+        $message = 'Internal server error';
+        if ($c->get('settings')['env'] != 'production') {
+            $message = "{$error}";
+        }
+        return $c['response']->withStatus(500)
+            ->withHeader('Content-Type', 'application/json')
+            ->withJson(['status' => 500, 'message' => $message ]);
+    };
+};
+
+$app->add(function (ServerRequestInterface $request, \Psr\Http\Message\ResponseInterface $response, $next) {
     $this->logger->info("REQUEST {$request->getMethod()} {$request->getUri()}", $request->getParsedBody() ?: []);
     $response = $next($request, $response);
-//    $this->logger->info("RESPONSE {$response->getBody()}");
+    $this->logger->info("RESPONSE {$response->getStatusCode()} {$response->getBody()}");
 
     return $response;
 });

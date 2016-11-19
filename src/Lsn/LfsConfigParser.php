@@ -69,6 +69,7 @@ class LfsConfigParser
         "start",
         "player",
         "welcome",
+        "tracks",
         "autosave",
     ];
 

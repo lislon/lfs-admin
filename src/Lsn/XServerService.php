@@ -31,6 +31,7 @@ class XServerService
     private $password = "docker";
 
     private $docker;
+    private $isRunning = null;
 
     /**
      * XServerService constructor.
@@ -43,6 +44,9 @@ class XServerService
 
     public function runIfStopped()
     {
+        if ($this->isRunning) {
+            return;
+        }
         try {
             $containerState = null;
 
@@ -56,6 +60,7 @@ class XServerService
             if (!$containerState->getRunning()) {
                 $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
             }
+            $this->isRunning = true;
         } catch (HttpException $e) {
             throw  new LsnException("Failed to create xserver: " . $e->getMessage());
         }

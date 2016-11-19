@@ -6,6 +6,8 @@ use Docker\API\Model\Container;
 use Docker\API\Model\ContainerInfo;
 use Docker\API\Model\ContainerState;
 use Docker\API\Model\HostConfig;
+use Docker\API\Model\NetworkConfig;
+use Docker\API\Model\NetworkCreateConfig;
 use Docker\API\Model\RestartPolicy;
 use Docker\Docker;
 use Docker\API\Model\ContainerConfig;
@@ -30,8 +32,10 @@ class LfsServerService
     private $cfgBasePath;
     private $xServer;
     private $isTesting;
+    private $dockerNetwork;
 
-        /**
+
+    /**
      * LfsServerService constructor.
      * @param Docker $docker
      * @param $dockerSettings
@@ -45,6 +49,7 @@ class LfsServerService
         $this->cfgBasePath = $dockerSettings['buildPath']."/lfscfg";
         $this->isTesting = $env == 'test';
         $this->xServer = $displayService;
+        $this->dockerNetwork = new DockerNetwork($docker);
     }
     
     public function getLogs($containerId)
@@ -56,22 +61,23 @@ class LfsServerService
             throw new LsnDockerException($e->getMessage(), $e);
         }
     }
-//
-//    public function getStats($containerId)
-//    {
-//        $info = $this->get($containerId);
-//
-//        try {
-//            $info[]
-//
-//            $statsContents = DockerUtils::readContainerFile($this->docker, $containerId, '/lfs/host.log');
-//
-//            return LfsConfigParser::parseStats($statsContents);
-//
-//        } catch (HttpException $e) {
-//            throw new LsnDockerException($e->getMessage(), $e);
-//        }
-//    }
+
+    public function getStats($containerId)
+    {
+        $containerInfo = $this->get($containerId);
+
+        try {
+            if ($containerInfo['state'] != 'running') {
+                throw new LsnException("Container must be running to get statistics", 409);
+            }
+            $statsContents = DockerUtils::readContainerFile($this->docker, $containerId, "/lfs/host{$containerInfo['port']}.txt");
+
+            return LfsConfigParser::parseStats($statsContents);
+
+        } catch (HttpException $e) {
+            throw new LsnDockerException($e->getMessage(), $e);
+        }
+    }
 
 
     /**
@@ -222,6 +228,8 @@ class LfsServerService
         }
     }
 
+  
+
     /**
      * Creates a new docker container for given server.
      *
@@ -286,6 +294,7 @@ class LfsServerService
                 "{$this->cfgBasePath}/$configDir/setup.cfg:/lfs/setup.cfg",
                 "{$this->cfgBasePath}/$configDir/welcome.txt:/lfs/welcome.txt",
                 "{$this->cfgBasePath}/$configDir/tracks.txt:/lfs/tracks.txt",
+                "/etc/localtime:/etc/localtime"
 //                "{$this->cfgBasePath}/$configDir/host.txt:/lfs/host{$port}.txt",
 //                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.log",
             ];
@@ -299,6 +308,13 @@ class LfsServerService
             $hostConfig->setBinds($binds);
             try {
                 $container = $containerManager->create($containerConfig);
+                try {
+                    $this->dockerNetwork->attachToNetwork($container->getId());
+                } catch (HttpException $e) {
+                    $this->delete($container->getId());
+                    throw $e;
+                }
+
             } catch (HttpException $e) {
                 LfsConfigParser::cleanFiles("{$this->cfgBasePath}/$configDir");
                 throw $e;
