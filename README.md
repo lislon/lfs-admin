@@ -17,22 +17,28 @@
 
 Запрос:
 
-    GET http://localhost:8080/servers
+``` http
+GET http://localhost:8080/servers
+```
 
 Ответ:
 
-    [
-        {
-            id: '34c8fb2b5c07'
-            state: 'running',
-        },
-        {
-            id: '34p8so2o5p07'
-            state: 'running',
-        }
-    ]
-    
-    
+``` http
+HTTP/1.1 200 OK
+
+[
+    {
+        "id": "34c8fb2b5c07"
+        "state": "running",
+    },
+    {
+        "id": "34p8so2o5p07"
+        "state": "running",
+    }
+]
+```
+
+
 Параметры ответа:
 
  * id - Идентификатор сервера
@@ -45,16 +51,20 @@
 
 Запрос:
 
-    GET http://localhost:8080/servers/34c8fb2b5c07
+``` http
+GET http://localhost:8080/servers/34c8fb2b5c07
+```
 
 Ответ:
 
-    HTTP/1.1 200 OK
+``` http
+HTTP/1.1 200 OK
 
-    {
-        id: '34c8fb2b5c07'
-        state: 'running',
-    }
+{
+    "id": "34c8fb2b5c07",
+    "state": "running"
+}
+```
 
 Параметры ответа: такие же как и в списке серверов.
 
@@ -63,51 +73,88 @@
 
 Запрос:
 
-    GET http://localhost:8080/servers/34c8fb2b5c07/stats
+
+
+``` http
+GET http://localhost:8080/servers/34c8fb2b5c07/stats
+```
+
 
 Ответ:
 
-    HTTP/1.1 200 OK
+``` http
+HTTP/1.1 200 OK
 
-    {
-      'lfs': '0.6M',
-      'status': 'online',
-      'guests': '0',
-      'maxguests': '38',
-      'host': '^5LSN ^0EVENTS PRACTICE',
-      'pass': 'secret',
-      'usemaster': 'yes',
-      'trackcfg': 'AU4',
-      'cars': '00100000001000000000',
-      'qual': '0',
-      'laps': '1',
-      'conn': '^0EVENTS ^3PRACTICE'
-    }
+{
+  "lfs": "0.6M",
+  "status": "online",
+  "guests": "0",
+  "maxguests": "38",
+  "host": "^5LSN ^0EVENTS PRACTICE",
+  "pass": "secret",
+  "usemaster": "yes",
+  "trackcfg": "AU4",
+  "cars": "00100000001000000000",
+  "qual": "0",
+  "laps": "1",
+  "conn": "^0EVENTS ^3PRACTICE"
+}
+```
 
 ### Создать сервер
 
 Запрос:
 
-    POST http://localhost:8080/servers
-    Content-Type: application/json
 
-    {
-        port: 6050,
-        version: '0.6M',
-        pereulok: true,
-        host: '^7LSN TEST',
-        welcome: '... welcome text ...',
-        track: 'AU1'
-    }
+``` http
+POST http://localhost:8080/servers
+Content-Type: application/json
+{
+  "image": "0.6M",
+  "carsmax": "38",
+  "carsguest": "1",
+  "pps": "6",
+  "qual": "1",
+  "wind": "0",
+  "vote": "no",
+  "usemaster": "yes",
+  "select": "no",
+  "start": "",
+  "autosave": "",
+  "port": "6550",
+  "host": "test lsn server",
+  "pass": "1234",
+  "admin": "123456",
+  "mode": "s3",
+  "track": "FE2",
+  "cars": "ALL",
+  "maxguests": "38",
+  "adminslots": "8",
+  "laps": "1",
+  "autokick": "no",
+  "rstmin": "",
+  "rstend": "",
+  "midrace": "",
+  "mustpit": "",
+  "canreset": "yes",
+  "fcv": "",
+  "cruise": "yes",
+  "player": "test lsn server",
+  "welcome": "Hey! \nThis is test server"
+  "tracks": ["FE2", "FE3"],
+  "pereulok": true,
+}
+```
 
 Ответ:
 
-    HTTP/1.1 201 OK
+``` http
+HTTP/1.1 201 OK
 
-    {
-        id: '34c8fb2b5c07'
-    }
-
+{
+  "id": "34c8fb2b5c07"
+}
+```
 
 Параметры запроса :
 
@@ -150,57 +197,77 @@
 
 Запрос:
 
-    DELETE http://localhost:8080/servers/34c8fb2b5c07
+``` http
+DELETE http://localhost:8080/servers/34c8fb2b5c07
+```
 
 Ответ:
 
-    HTTP/1.1 204 No Content
+``` http
+HTTP/1.1 204 No Content
+```
 
 ### Запустить сервер
 
 Запрос:
 
-    POST http://localhost:8080/servers/34c8fb2b5c07/start
+``` http
+POST http://localhost:8080/servers/34c8fb2b5c07/start
+```
 
 Ответ:
 
-    HTTP/1.1 202 OK
+``` http
+HTTP/1.1 202 OK
+```
 
 ### Остановить сервер
 
 Запрос:
 
-    POST http://localhost:8080/servers/34c8fb2b5c07/stop
+``` http
+POST http://localhost:8080/servers/34c8fb2b5c07/stop
+```
 
 Ответ:
 
-    HTTP/1.1 202 OK
+``` http
+HTTP/1.1 202 OK
+```
 
 ### Перезапустить сервер
 
 Запрос:
 
-    POST http://localhost:8080/servers/34c8fb2b5c07/restart
+``` http
+POST http://localhost:8080/servers/34c8fb2b5c07/restart
+```
 
 Ответ:
 
-    HTTP/1.1 202 OK
+``` http
+HTTP/1.1 202 OK
+```
 
 ## Ответ с ошибкой
 
 Запрос:
 
-    DELETE http://localhost:8080/servers/34c8fb2b5c07
+``` http
+DELETE http://localhost:8080/servers/34c8fb2b5c07
+```
 
 Ответ:
 
-    HTTP/1.1 409 Conflict
-    Content-Type: application/json
+``` http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
 
-    {
-        error: 409,
-        message: 'Server should be stopped prior to deleting'
-    }
+{
+    "error": 409,
+    "message": "Server should be stopped prior to deleting"
+}
+```
 
 
 ## Статусы сервера
@@ -209,7 +276,6 @@
 
 
 ## Установка сервера на CentOS 7
-
 
 ### Установка docker и php
 
@@ -228,7 +294,7 @@ TODO: проверить и дописать установку
     #php stuff
     rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm 
-    yum install -y php56w-fpm php56w-opcache
+    yum install -y php56w php56w-fpm php56w-opcache
     
     
     yum install -y docker-engine epel-release git
@@ -257,33 +323,36 @@ php-fpm слушает на порту 9001
 
 /etc/nginx/nginx.conf:
 
-    ...
-    
-    # Docker-API server
-    server {
-        listen 8080 default_server;
-        listen [::]:8080 default_server;
+``` nginx
+...
+
+# Docker-API server
+server {
+    listen 8080 default_server;
+    listen [::]:8080 default_server;
 
 
-        root /opt/lfsadmin/current/public;
+    root /opt/lfsadmin/current/public;
 
-        index index.html index.php;
+    index index.html index.php;
 
-        location / {
-            try_files $uri /index.php;
-        }
-
-        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        #
-        location ~ \.php$ {
-            fastcgi_pass   127.0.0.1:9001;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-            include        fastcgi_params;
-        }
+    location / {
+        try_files $uri /index.php;
     }
 
-/php-fpm.d/lfsapi.conf:
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    location ~ \.php$ {
+        fastcgi_pass   127.0.0.1:9001;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+}
+```
+
+
+/etc/php-fpm.d/lfsapi.conf:
 
     listen = 127.0.0.1:9001
     listen.allowed_clients = 127.0.0.1
@@ -301,6 +370,13 @@ php-fpm слушает на порту 9001
     php_value[session.save_handler] = files
     php_value[session.save_path]    = /opt/lfsadmin/session
     php_value[soap.wsdl_cache_dir]  = /opt/lfsadmin/wsdlcache
+
+### Развертывание кода
+
+ * Установить [deployer](https://deployer.org/)
+ * Перейти в директорию проекта и выполнить:
+
+    dep deploy
 
 ## Решение проблем
 
