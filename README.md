@@ -189,7 +189,7 @@ HTTP/1.1 201 OK
  * cruise
  * start
  * player
- * tracks - string[] - список возможных трас на сервере. Например:  ['AU1', 'AU1x']
+ * tracks - string[] - список возможных трас на сервере. Например:  \['AU1', 'AU1x'\]
  * welcome - string Строка приветсвия на сервера (Можно использовать переносы строк `\n`)
  * autosave
 
@@ -316,6 +316,7 @@ TODO: проверить и дописать установку
     ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts
 
 
+
 ### Настройка nginx и php-fpm
 
 Путь к проекту `/opt/lfsadmin/current/public`
@@ -374,6 +375,12 @@ server {
 ### Развертывание кода
 
  * Установить [deployer](https://deployer.org/)
+ * На удаленном сервере добаивть юзера под которым идет развертка в `/etc/sudoers`:
+  
+      username ALL=NOPASSWD:/bin/systemctl restart php-fpm.service
+  
+ * В корне проекта настроить файл экспорта `deploy.yml` по примеру
+   `deploy.example.yml`'. Более подробная информация [здесь](https://deployer.org/docs/servers)
  * Перейти в директорию проекта и выполнить:
 
     dep deploy
@@ -388,7 +395,7 @@ server {
     
 ### Ошибка Docker-а при удалении контейнера
 
-Error response from daemon: Driver devicemapper failed to remove root filesystem 19ffd38c2ff6826fcaa1cb0ba626892b7de48dad0812a4457e8412f234dc0979: Device is Busy
+    Error response from daemon: Driver devicemapper failed to remove root filesystem 19ffd38c2ff6826fcaa1cb0ba626892b7de48dad0812a4457e8412f234dc0979: Device is Busy
 
 [См. также](https://github.com/docker/docker/issues/3823)
 

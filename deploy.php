@@ -15,15 +15,15 @@ set('writable_dirs', ['logs']);
 serverList('deploy.yml');
 
 
-///**
-// * Restart php-fpm on success deploy.
-// */
-//task('php-fpm:restart', function () {
-//    // Attention: The user must have rights for restart service
-//    // Attention: the command "sudo /bin/systemctl restart php-fpm.service" used only on CentOS system
-//    // /etc/sudoers: username ALL=NOPASSWD:/bin/systemctl restart php-fpm.service
-//    run('sudo /bin/systemctl restart php-fpm.service');
-//})->desc('Restart PHP-FPM service');
+/**
+* Restart php-fpm on success deploy.
+*/
+task('php-fpm:restart', function () {
+   // Attention: The user must have rights for restart service
+   // Attention: the command "sudo /bin/systemctl restart php-fpm.service" used only on CentOS system
+   // /etc/sudoers: username ALL=NOPASSWD:/bin/systemctl restart php-fpm.service
+   run('sudo /bin/systemctl restart php-fpm.service');
+})->desc('Restart PHP-FPM service');
 
 task('pwd', function () {
     $result = run('pwd');
@@ -35,6 +35,6 @@ task('test', function () {
 });
 
 
-//after('success', 'php-fpm:restart');
+after('success', 'php-fpm:restart');
 
 after('deploy:update_code', 'deploy:shared');
