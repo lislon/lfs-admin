@@ -61,7 +61,7 @@ $app->post('/servers/{id}/restart', function ($request, $response, $args) {
 $app->delete('/servers/{id}', function ($request, Response $response, $args) {
     $this->get('lfsServer')->delete($args['id']);
     $this->logger->addNotice("Server deleted {$args['id']}");
-    $response->withStatus(204);
+    return $response->withStatus(204);
 });
 
 $app->get('/server-images', function ($request, $response, $args) {
