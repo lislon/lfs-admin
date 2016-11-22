@@ -50,7 +50,7 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
      * @param array|object|null $requestData the request data
      * @return \Slim\Http\Response
      */
-    protected function runApp($requestMethod, $requestUri, $requestData = null)
+    protected function runApp($requestMethod, $requestUri, $requestData = null, $contentType = null)
     {
         $app = self::getApp();
 
@@ -68,6 +68,9 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
         // Add request data, if it exists
         if (isset($requestData)) {
             $request = $request->withParsedBody($requestData);
+        }
+        if (isset($contentType)) {
+            $request = $request->withHeader('Content-Type', $contentType);
         }
 
         // Set up a response object

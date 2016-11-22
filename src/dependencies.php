@@ -36,6 +36,6 @@ $container['lfsServer'] = function ($c) {
 
 $container['lfsImage'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $service = new \Lsn\LfsImageService($settings);
+    $service = new \Lsn\LfsImageService($c->get('docker'), $settings);
     return $service;
 };

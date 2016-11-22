@@ -2,13 +2,18 @@
 
 namespace Tests\Functional;
 
+use Lsn\Helper\TempDir;
+use Naucon\File\File;
+use Slim\Http\RequestBody;
+
 class LfsHttpServiceTest extends BaseTestCase
 {
     private $serverId = null;
+    private $imageCreated = null;
 
     const serverTemplate = [
         'port' => 58999,
-        'image' => '0.6M',
+        'image' => LfsImageHttpServiceTest::IMAGE_NAME,
         'host' => 'lislon test',
         'usemaster' => 'no',
         'pereulok' => true,
@@ -22,12 +27,23 @@ class LfsHttpServiceTest extends BaseTestCase
         self::getApp()->getContainer()->get('lfsServer')->stopAllTestContainers();
     }
 
+    public function setUp()
+    {
+        if ($this->imageCreated == null) {
+            // ensure we have build image
+            LfsImageHttpServiceTest::createTestImage($this);
+            $this->imageCreated = true;
+        }
+    }
+
 
     private function createServer()
     {
         if ($this->serverId != null) {
             throw new \Exception("Server is already created. Block second creation in order to prevent polluting space");
         }
+
+
         $response = $this->runApp('POST', '/servers', self::serverTemplate);
         $this->assertResponse(201, $response);
         $json = json_decode($response->getBody(), true);
@@ -90,7 +106,7 @@ class LfsHttpServiceTest extends BaseTestCase
 
         $this->assertResponse(200, $response);
         $json = json_decode($response->getBody(), true);
-        $this->assertRegExp("/LFS/", $json['logs']);
+        $this->assertRegExp("/This is test/", $json['logs']);
     }
 
     public function testGetStats()
@@ -130,15 +146,8 @@ class LfsHttpServiceTest extends BaseTestCase
         $this->assertEquals('lislon test', $json['host']);
         $this->assertEquals(true, $json['pereulok']);
         $this->assertEquals('stopped', $json['state']);
-        $this->assertEquals('0.6M', $json['image']);
+        $this->assertEquals(LfsImageHttpServiceTest::IMAGE_NAME, $json['image']);
         $this->assertEquals('test', $json['pass']);
     }
 
-    public function testListVersions()
-    {
-        $response = $this->runApp('GET', "/server-images");
-        $this->assertResponse(200, $response);
-        $json = json_decode($response->getBody(), true);
-        $this->assertGreaterThan(0, sizeof($json));
-    }
 }

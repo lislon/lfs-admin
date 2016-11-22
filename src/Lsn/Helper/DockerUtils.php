@@ -10,46 +10,30 @@ namespace Lsn\Helper;
 
 
 use Docker\Docker;
+use GuzzleHttp\Psr7\LazyOpenStream;
+use Lsn\Helper\TempDir;
 
 class DockerUtils
 {
-    private static function tempdir($dir = false, $prefix = 'php')
-    {
-        $tempfile = tempnam(sys_get_temp_dir(), '');
-        if (file_exists($tempfile)) {
-            unlink($tempfile);
-        }
-        mkdir($tempfile);
-        if (is_dir($tempfile)) {
-            return $tempfile;
-        }
-    }
-
 
     public static function readContainerFile(Docker $docker, $containerId, $filename)
     {
         $response = $docker->getContainerManager()->getArchive($containerId, ['path' => $filename]);
 
-        $dir = self::tempdir();
+        $tempfile = new TempFile(null, ".tar");
+        $writeStream = new LazyOpenStream($tempfile->getPath(), 'w');
+        \GuzzleHttp\Psr7\copy_to_stream($response->getBody(), $writeStream);
 
-        try {
-            file_put_contents("$dir/archive.tar", $response->getBody()->getContents());
-
-            $pharData = new \PharData("$dir/archive.tar");
-            $pharData->decompressFiles();
-            if ($pharData->count() != 1) {
-                throw new \Exception("Number of files should be!");
-            }
-            foreach ($pharData as $file) {
-                return file_get_contents($file->getPathname());
-            }
-
-        } finally {
-            foreach (glob($dir . '/*') as $file) {
-                if (is_file($file))
-                    unlink($file);
-            }
-            rmdir($dir);
+        $pharData = new \PharData($tempfile->getPath());
+        $pharData->decompressFiles();
+        if ($pharData->count() != 1) {
+            throw new \Exception("Number of files should be!");
+        }
+        foreach ($pharData as $file) {
+            // TODO: Return log file as stream to prevent memory
+            $fileContents = file_get_contents($file->getPathname());
+            unlink($file->getPathname());
+            return $fileContents;
         }
     }
 }

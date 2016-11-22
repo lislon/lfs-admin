@@ -33,6 +33,7 @@ class LfsServerService
     private $xServer;
     private $isTesting;
     private $dockerNetwork;
+    private $dockerImage;
 
 
     /**
@@ -50,6 +51,7 @@ class LfsServerService
         $this->isTesting = $env == 'test';
         $this->xServer = $displayService;
         $this->dockerNetwork = new DockerNetwork($docker);
+        $this->dockerImage = new LfsImageService($docker, $dockerSettings);
     }
     
     public function getLogs($containerId)
@@ -146,7 +148,7 @@ class LfsServerService
                 'id'    => $container->getId(),
                 'state' => $this->getStateFromContainer($container),
                 'pereulok' => !empty($container->getConfig()->getLabels()['lfs-pereulok']),
-                'image' => $container->getConfig()->getLabels()['lfs-image'],
+                'image' => $container->getConfig()->getImage(),
             ];
 
             $result = array_merge(
@@ -258,12 +260,11 @@ class LfsServerService
             $containerManager = $this->docker->getContainerManager();
 
             $containerConfig = new ContainerConfig();
-            $containerConfig->setImage('monowine');
+            $containerConfig->setImage($lfsImage);
             $containerConfig->setWorkingDir("/lfs");
             $labels = [
                 'lfs-server' => 'true',
                 'conf-dir' => $configDir,
-                'lfs-image' => $lfsImage,
             ];
 
             if ($this->isTesting) {
@@ -292,9 +293,6 @@ class LfsServerService
 
             $binds = ["/etc/localtime:/etc/localtime:ro"];
 
-            foreach (['data', 'DCon.exe'] as $file) {
-                $binds[] = "{$this->lfsBasePath}/$lfsImage/$file:/lfs/$file:ro";
-            }
             foreach (['setup.cfg', 'welcome.txt', 'tracks.txt'] as $file) {
                 $binds[] = "{$this->cfgBasePath}/$configDir/$file:/lfs/$file";
             }
@@ -333,12 +331,8 @@ class LfsServerService
      */
     private function validateImage($lfsImage)
     {
-        if (!preg_match("/^[\\w-]*\\.[\\w-]*$/", $lfsImage)) {
-            throw new LsnException("Lfs image have wrong characters [A-Z0-9.] is allowed");
-        }
-        $filename = $this->lfsBasePath."/".$lfsImage;
-        if (!file_exists($filename)) {
-            throw new LsnException("Lfs image '$lfsImage' is not found ($filename not exists)");
+        if (!$this->dockerImage->hasImage($lfsImage)) {
+            throw new LsnException("Lfs image '$lfsImage' is not found)");
         }
     }
 

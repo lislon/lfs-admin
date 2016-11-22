@@ -34,6 +34,7 @@ $c['phpErrorHandler'] = function ($c) {
         if ($c->get('settings')['env'] != 'production') {
             $message = "{$error}";
         }
+        $c['logger']->addError($error);
         return $c['response']->withStatus(500)
             ->withHeader('Content-Type', 'application/json')
             ->withJson(['status' => 500, 'message' => $message ]);
@@ -41,7 +42,16 @@ $c['phpErrorHandler'] = function ($c) {
 };
 
 $app->add(function (ServerRequestInterface $request, \Psr\Http\Message\ResponseInterface $response, $next) {
-    $this->logger->info("REQUEST {$request->getMethod()} {$request->getUri()}", $request->getParsedBody() ?: []);
+    $params = [];
+    $parsedBody = $request->getParsedBody();
+    if ($parsedBody) {
+        if (is_array($parsedBody)) {
+            $params = $parsedBody;
+        } else if (is_object($parsedBody)) {
+            $params = ["<stream ({$parsedBody->getSize()} bytes)>"];
+        }
+    }
+    $this->logger->info("REQUEST {$request->getMethod()} {$request->getUri()}", $params);
     $response = $next($request, $response);
     $this->logger->info("RESPONSE {$response->getStatusCode()} {$response->getBody()}");
 
