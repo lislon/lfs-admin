@@ -375,9 +375,11 @@ server {
 ### Развертывание кода
 
  * Установить [deployer](https://deployer.org/)
- * На удаленном сервере добаивть юзера под которым идет развертка в `/etc/sudoers`:
+ * На удаленном сервере добаивть права юзеру под которым идет развертка в `/etc/sudoers`:
   
-      username ALL=NOPASSWD:/bin/systemctl restart php-fpm.service
+      Defaults:lfsadmin !requiretty
+
+      lfsadmin ALL=NOPASSWD:/bin/systemctl restart php-fpm.service
   
  * В корне проекта настроить файл экспорта `deploy.yml` по примеру
    `deploy.example.yml`'. Более подробная информация [здесь](https://deployer.org/docs/servers)

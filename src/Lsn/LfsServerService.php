@@ -193,7 +193,8 @@ class LfsServerService
                     // we do not want to hide original exception
                 }
             }
-            throw new LsnException($e->getMessage(), $e);
+            // oh, no guess why we got 500
+            throw new LsnException($e->getMessage());
         }
     }
 
@@ -289,18 +290,18 @@ class LfsServerService
 
             LfsConfigParser::writeConfig("{$this->cfgBasePath}/$configDir", $config);
 
-            $binds = [
-                "{$this->lfsBasePath}/$lfsImage:/lfs",
-                "{$this->cfgBasePath}/$configDir/setup.cfg:/lfs/setup.cfg",
-                "{$this->cfgBasePath}/$configDir/welcome.txt:/lfs/welcome.txt",
-                "{$this->cfgBasePath}/$configDir/tracks.txt:/lfs/tracks.txt",
-                "/etc/localtime:/etc/localtime"
-//                "{$this->cfgBasePath}/$configDir/host.txt:/lfs/host{$port}.txt",
-//                "{$this->cfgBasePath}/$configDir/log.log:/lfs/log.log",
-            ];
+            $binds = ["/etc/localtime:/etc/localtime:ro"];
+
+            foreach (['data', 'DCon.exe'] as $file) {
+                $binds[] = "{$this->lfsBasePath}/$lfsImage/$file:/lfs/$file:ro";
+            }
+            foreach (['setup.cfg', 'welcome.txt', 'tracks.txt'] as $file) {
+                $binds[] = "{$this->cfgBasePath}/$configDir/$file:/lfs/$file";
+            }
 
             if (!empty($config['pereulok'])) {
-                $binds[] = "{$this->lfsBasePath}/lfspLauncher.exe:/lfs/LFSP.exe";
+                $binds[] = "{$this->lfsBasePath}/$lfsImage/launcher_lic.cf:/lfs/launcher_lic.cf:ro";
+                $binds[] = "{$this->lfsBasePath}/lfspLauncher.exe:/lfs/LFSP.exe:ro";
                 $labels['lfs-pereulok'] = 'yes';
             }
 

@@ -2,7 +2,7 @@
 
 namespace Tests\Functional;
 
-class LFsHttpServiceTest extends BaseTestCase
+class LfsHttpServiceTest extends BaseTestCase
 {
     private $serverId = null;
 
