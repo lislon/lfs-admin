@@ -181,7 +181,7 @@ class LfsServerService
                     $wantedPort = reset($portBindings)[0]->getHostPort();
 
 
-                    $containerInfos = $this->findAllLfsContainers('running');
+                    $containerInfos = $this->findAllLfsContainers(['running', 'restarting']);
                     foreach ($containerInfos as $containerInfo) {
                         if (!empty($containerInfo->getPorts())) {
                             $openedPort = $containerInfo->getPorts()[0]->getPublicPort();
