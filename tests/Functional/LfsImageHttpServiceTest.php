@@ -1,8 +1,12 @@
 <?php
 
 namespace Tests\Functional;
+use GuzzleHttp\Psr7\LazyOpenStream;
 use Lsn\Helper\TempDir;
+use Lsn\Helper\TempFile;
 use Naucon\File\File;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use Slim\Http\RequestBody;
 
 /**
@@ -17,6 +21,25 @@ class LfsImageHttpServiceTest extends BaseTestCase
 
     private $imageName = null;
 
+    /**
+     * @return TempDir
+     * @throws \Exception
+     * @throws \Naucon\File\Exception\FileException
+     */
+    private static function prepareFolderWithImage()
+    {
+// create dummy image
+        $tempDir = new TempDir("lfs-test-image");
+        (new File($tempDir->getPath() . "/DCon.exe"))->createNewFile();
+        // make sure image will be rebuilt
+        file_put_contents($tempDir->getPath() . "/DCon.exe", "");
+        file_put_contents($tempDir->getPath() . "/test.txt", "This is test\n");
+        file_put_contents($tempDir->getPath() . "/log.log", "This is test\n");
+        mkdir($tempDir->getPath()."/data");
+        file_put_contents($tempDir->getPath() . "/data/test.txt", "This is test inside data\n");
+        return $tempDir;
+    }
+
     public static function createTestImage(BaseTestCase $baseTestCase)
     {
         $body = self::getTestImageArchive();
@@ -26,14 +49,7 @@ class LfsImageHttpServiceTest extends BaseTestCase
 
     private static function getTestImageArchive()
     {
-        // create dummy image
-        $tempDir = new TempDir("lfs-test-image");
-        (new File($tempDir->getPath()."/DCon.exe"))->createNewFile();
-        // make sure image will be rebuilt
-        file_put_contents($tempDir->getPath()."/DCon.exe", "");
-        file_put_contents($tempDir->getPath()."/test.txt", "This is test\n");
-        file_put_contents($tempDir->getPath()."/log.log", "This is test\n");
-
+        $tempDir = self::prepareFolderWithImage();
 
         $tempDir4Tar = new TempDir();
 
@@ -56,6 +72,42 @@ class LfsImageHttpServiceTest extends BaseTestCase
         $this->assertArrayHasKey('logs', $json);
         $this->imageName = 'test';
     }
+
+    public function testCreateImageWithZip()
+    {
+        $tempDir = self::prepareFolderWithImage();
+        $tempFile = new TempFile(null, ".zip");
+        $zip = new \ZipArchive();
+        $zip->open($tempFile->getPath(), \ZipArchive::CREATE);
+        // Create recursive directory iterator
+
+        /** @var SplFileInfo[] $files */
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($tempDir->getPath()),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $name => $file) {
+            // Skip directories (they would be added automatically)
+            if (!$file->isDir()) {
+                // Get real and relative path for current file
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($tempDir->getPath()) + 1);
+
+                // Add current file to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+        $zip->close();
+
+        $lazyOpenStream = new LazyOpenStream($tempFile->getPath(), "r");
+
+        $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $lazyOpenStream, 'application/zip');
+        $json = json_decode($response->getBody(), true);
+        $this->assertArrayHasKey('logs', $json);
+        $this->imageName = 'test';
+    }
+
 
     public function testDeleteImage()
     {

@@ -175,15 +175,4 @@ class LfsImageService
     {
         RecursiveDirCopy::copy(realpath(__DIR__ . '/../../dockerfiles/lfs-template/'), $dockerTempDir->getPath());
     }
-
-    /**
-     * @param $dockerTempDir
-     */
-    private function packDirectoryToTgz($dockerTempDir)
-    {
-        $outTgzFile = new TempFile(null, ".tgz");
-        $outPharData = new \PharData($outTgzFile->getPath());
-        $outPharData->buildFromDirectory($dockerTempDir->getPath());
-        return $outPharData;
-    }
 }
