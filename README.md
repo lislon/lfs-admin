@@ -249,6 +249,33 @@ POST http://localhost:8080/servers/34c8fb2b5c07/restart
 HTTP/1.1 202 OK
 ```
 
+### Получить список доступных версий серверов
+
+Запрос:
+
+``` http
+GET http://localhost:8080/server-images
+```
+
+Ответ:
+
+``` http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+    {
+      "id": "34c8fb2b5c07",
+      "name": "0.6Q"
+    },
+    {
+      "id": "14c8fb2b5c07",
+      "name": "0.6M"
+    }
+]
+
+```
+
 ### Залить новую версию (image) сервера
 
 
@@ -265,13 +292,6 @@ Content-Type: application/gzip
 
 ``` http
 HTTP/1.1 200 OK
-
-{
-    "logs": [
-      "Creating server...", 
-      "done..."
-    ]
-}
 ```
 
 Для заливки новой версии сервера необходимо передать архив с содержимым папки

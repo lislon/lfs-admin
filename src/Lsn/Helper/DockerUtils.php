@@ -15,7 +15,6 @@ use Lsn\Helper\TempDir;
 
 class DockerUtils
 {
-
     public static function readContainerFile(Docker $docker, $containerId, $filename)
     {
         $response = $docker->getContainerManager()->getArchive($containerId, ['path' => $filename]);

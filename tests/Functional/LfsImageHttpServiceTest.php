@@ -8,6 +8,7 @@ use Naucon\File\File;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Slim\Http\RequestBody;
+use Tests\Helper\TempFilesMixin;
 
 /**
  * Created by PhpStorm.
@@ -17,9 +18,28 @@ use Slim\Http\RequestBody;
  */
 class LfsImageHttpServiceTest extends BaseTestCase
 {
-    const IMAGE_NAME = 'lfs-test';
+
+    const IMAGE_NAME = 'test-0.6Q';
 
     private $imageName = null;
+    /**
+     * @var TempFilesMixin
+     */
+    private static $tempFiles;
+
+    public static function setUpBeforeClass()
+    {
+        if (!self::$tempFiles) {
+            self::$tempFiles = new TempFilesMixin();
+        }
+    }
+
+
+    protected function tearDown()
+    {
+        self::$tempFiles->cleanTempFiles();
+    }
+
 
     /**
      * @return TempDir
@@ -28,8 +48,11 @@ class LfsImageHttpServiceTest extends BaseTestCase
      */
     private static function prepareFolderWithImage()
     {
-// create dummy image
-        $tempDir = new TempDir("lfs-test-image");
+        if (!self::$tempFiles) {
+            self::$tempFiles = new TempFilesMixin();
+        }
+        // create dummy image
+        $tempDir = self::$tempFiles->tempDir("lfs-test-image");
         (new File($tempDir->getPath() . "/DCon.exe"))->createNewFile();
         // make sure image will be rebuilt
         file_put_contents($tempDir->getPath() . "/DCon.exe", "");
@@ -43,23 +66,23 @@ class LfsImageHttpServiceTest extends BaseTestCase
     public static function createTestImage(BaseTestCase $baseTestCase)
     {
         $body = self::getTestImageArchive();
-        $baseTestCase->runApp('POST', '/server-images/lfs-test', $body, 'application/gzip');
+        $baseTestCase->runApp('POST', '/server-images/'.self::IMAGE_NAME, $body, 'application/gzip');
         return self::IMAGE_NAME;
     }
 
     private static function getTestImageArchive()
     {
         $tempDir = self::prepareFolderWithImage();
-
-        $tempDir4Tar = new TempDir();
+        $tempDir4Tar = self::$tempFiles->tempDir();
 
         $tarArchive = "{$tempDir4Tar->getPath()}/archive.tgz";
         $pharData = new \PharData($tarArchive);
         $pharData->buildFromDirectory($tempDir->getPath());
         $gzFile = $pharData->compress(\Phar::GZ);
-        $body = new RequestBody();
-        $body->write(file_get_contents($gzFile->getPath()));
-        $body->rewind();
+        $body = new LazyOpenStream($gzFile->getPath(), "r");
+//        $body = new RequestBody();
+//        $body->write(file_get_contents($gzFile->getPath()));
+//        $body->rewind();
         return $body;
     }
 
@@ -68,15 +91,14 @@ class LfsImageHttpServiceTest extends BaseTestCase
         $body = self::getTestImageArchive();
 
         $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $body, 'application/gzip');
-        $json = json_decode($response->getBody(), true);
-        $this->assertArrayHasKey('logs', $json);
-        $this->imageName = 'test';
+        $this->assertResponse(200, $response);
+        $this->imageName = self::IMAGE_NAME;
     }
 
     public function testCreateImageWithZip()
     {
         $tempDir = self::prepareFolderWithImage();
-        $tempFile = new TempFile(null, ".zip");
+        $tempFile = self::$tempFiles->tempFile(null, ".zip");
         $zip = new \ZipArchive();
         $zip->open($tempFile->getPath(), \ZipArchive::CREATE);
         // Create recursive directory iterator
@@ -103,9 +125,7 @@ class LfsImageHttpServiceTest extends BaseTestCase
         $lazyOpenStream = new LazyOpenStream($tempFile->getPath(), "r");
 
         $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $lazyOpenStream, 'application/zip');
-        $json = json_decode($response->getBody(), true);
-        $this->assertArrayHasKey('logs', $json);
-        $this->imageName = 'test';
+        $this->assertResponse(200, $response);
     }
 
 
@@ -116,13 +136,15 @@ class LfsImageHttpServiceTest extends BaseTestCase
         $this->assertResponse(204, $response);
     }
 
-    public function testListVersions()
+    public function testListImages()
     {
         self::createTestImage($this);
         $response = $this->runApp('GET', "/server-images");
         $this->assertResponse(200, $response);
         $json = json_decode($response->getBody(), true);
         $this->assertGreaterThan(0, sizeof($json));
+        $this->assertArrayHasKey('id', $json[0]);
+        $this->assertArrayHasKey('name', $json[0]);
     }
 
 }

@@ -70,8 +70,7 @@ $app->get('/server-images', function ($request, $response, $args) {
 });
 
 $app->post('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {
-    $parsedBody = $request->getParsedBody();
-    $result = $this->get('lfsImage')->createImage($args['name'], $parsedBody);
+    $result = $this->get('lfsImage')->createImage($args['name'], $request->getBody());
     return $response->withJson($result);
 });
 

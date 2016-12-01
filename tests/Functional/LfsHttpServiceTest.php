@@ -27,6 +27,11 @@ class LfsHttpServiceTest extends BaseTestCase
         self::getApp()->getContainer()->get('lfsServer')->stopAllTestContainers();
     }
 
+    public static function tearDownAfterClass()
+    {
+        self::getApp()->getContainer()->get('lfsServer')->deleteAllTestContainers();
+    }
+
     public function setUp()
     {
         if ($this->imageCreated == null) {

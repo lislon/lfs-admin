@@ -53,19 +53,61 @@ class LfsImageService
         if ($this->images == null) {
             $this->loadImages();
         }
-        return $this->images;
+        $result = [];
+        foreach ($this->images as $name => $id) {
+            $result[] = [
+                "id" => $id,
+                "name" => $name
+            ];
+        }
+        return $result;
     }
 
+
+    /**
+     * Returns image id by user-friendly name
+     *
+     * @param $name
+     * @return string
+     * @throws LsnNotFoundException
+     */
+    public function getImageId($name)
+    {
+        if ($this->images == null) {
+            $this->loadImages();
+        }
+        if (!isset($this->images[$name])) {
+            throw new LsnNotFoundException("Image with name '$name' is not found");
+        }
+        return $this->images[$name];
+    }
+
+    public function getImageName($imageId)
+    {
+        if ($this->images == null) {
+            $this->loadImages();
+        }
+        $imageName = array_search($imageId, $this->images);
+        if ($imageName === false) {
+            throw new LsnNotFoundException("Image with id '$imageId' is not found");
+        }
+        return $imageName;
+    }
+
+    /**
+     * Deletes image from docker
+     *
+     * @param $name
+     * @throws LsnNotFoundException
+     */
     public function deleteImage($name)
     {
-        if (!$this->validateImageName($name)) {
-            throw new LsnException("Image name must starts with lfs- prefix");
-        }
         try {
-            $this->dockerImage->remove($name);
+            // TODO: Add check for containers
+            $this->dockerImage->remove($this->getImageId($name));
         } catch (HttpException $e) {
-            if ($e->getCode() == 404) {
-                throw new LsnNotFoundException("Image with name '$name' is not found");
+            if ($e->getCode() == 409) {
+                throw new LsnNotFoundException("Can't delete image with name '$name'. Probably containers that using this image is still exist");
             }
             throw $e;
         }
@@ -81,9 +123,7 @@ class LfsImageService
      */
     public function createImage($name, StreamInterface $stream)
     {
-        if (!$this->validateImageName($name)) {
-            throw new LsnException("Image name must starts with lfs- prefix");
-        }
+        $imageId = 'lfs-'.strtolower(trim(preg_replace('/[^a-zA-Q0-9_]/', '-', $name), "_"));
 
         $dockerTempDir = new TempDir("lfs-image");
         if (!@mkdir("{$dockerTempDir->getPath()}/lfs")) {
@@ -102,12 +142,12 @@ class LfsImageService
         $context = new Context($dockerTempDir->getPath());
         $inputStream = $context->toStream();
         $result = $this->dockerImage->build($inputStream, [
-            't' => "$name",
-            'labels' => json_encode(['lfs-server' => 'yes'])
+            't' => $imageId,
+            'labels' => json_encode(['lfs-server' => 'yes', 'name' => $name])
             ]);
 
         return [
-            'logs' => array_map(function($buildInfo) {
+            'success' => array_map(function($buildInfo) {
                 return $buildInfo->getStream();
             }, $result)
         ];
@@ -118,7 +158,11 @@ class LfsImageService
         $this->images = [];
         $images = $this->dockerImage->findAll(['filters' => json_encode(['label' => ['lfs-server']])]);
         foreach ($images as /** \Docker\API\Model\ImageItem */ $image) {
-            $this->images[] = explode(":", $image->getRepoTags()[0])[0];
+            if (isset($image->getLabels()->name)) {
+                $id = explode(":", $image->getRepoTags()[0])[0];
+                $name = $image->getLabels()->name;
+                $this->images[$name] = $id;
+            }
         }
     }
 
@@ -134,12 +178,7 @@ class LfsImageService
             $this->loadImages();
         }
 
-        return array_search($imageName, $this->images) !== false;
-    }
-
-    private function validateImageName($name)
-    {
-        return preg_match('/^[\w-_\.]+$/', $name) !== false;
+        return isset($this->images[$imageName]);
     }
 
     /**

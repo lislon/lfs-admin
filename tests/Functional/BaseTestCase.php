@@ -2,10 +2,17 @@
 
 namespace Tests\Functional;
 
+use GuzzleHttp\Psr7\Stream;
+use Psr\Http\Message\StreamInterface;
 use Slim\App;
+use Slim\Http\Cookies;
+use Slim\Http\Headers;
 use Slim\Http\Request;
+use Slim\Http\RequestBody;
 use Slim\Http\Response;
 use Slim\Http\Environment;
+use Slim\Http\UploadedFile;
+use Slim\Http\Uri;
 
 /**
  * This is an example class that shows how you could set up a method that
@@ -62,8 +69,26 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
             ]
         );
 
-        // Set up a request object based on the environment
-        $request = Request::createFromEnvironment($environment);
+        $method = $environment['REQUEST_METHOD'];
+        $uri = Uri::createFromEnvironment($environment);
+        $headers = Headers::createFromEnvironment($environment);
+        $cookies = Cookies::parseHeader($headers->get('Cookie', []));
+        $serverParams = $environment->all();
+
+        if ($requestData instanceof StreamInterface) {
+            $body = $requestData;
+            $requestData = null;
+        } else {
+            $body = new RequestBody();
+        }
+        $request = new Request($method, $uri, $headers, $cookies, $serverParams, $body);
+
+        if ($method === 'POST' &&
+            in_array($request->getMediaType(), ['application/x-www-form-urlencoded', 'multipart/form-data'])
+        ) {
+            // parsed body must be $_POST
+            $request = $request->withParsedBody($_POST);
+        }
 
         // Add request data, if it exists
         if (isset($requestData)) {

@@ -92,10 +92,11 @@ class LfsServerService
     {
         try {
             $container = $this->docker->getContainerManager()->find($containerId);
+            $mapper = new DockerStateMapper();
 
 
             // Stop container if necessary
-            if ($this->getStateFromContainer($container) != 'stopped') {
+            if ($mapper->mapContainerState($container) != 'stopped') {
                 throw new LsnException("Server should be stopped prior to deleting", 409);
             }
 
@@ -116,12 +117,13 @@ class LfsServerService
     public function listServers()
     {
         try {
+            $stateMapper = new DockerStateMapper();
             $containerInfos = $this->findAllLfsContainers();
 
-            return array_map(function (ContainerInfo $container) {
+            return array_map(function (ContainerInfo $container) use ($stateMapper) {
                 return [
                     'id' => $container->getId(),
-                    'state' => $container->getState(),
+                    'state' => $stateMapper->mapContainerInfoState($container),
                 ];
             }, $containerInfos);
         } catch (HttpException $e) {
@@ -129,26 +131,17 @@ class LfsServerService
         }
     }
 
-    private function getStateFromContainer(Container $container) {
-        $state = $container->getState();
-        if ($state->getRunning()) {
-            return 'running';
-        }
-        if ($state->getRestarting()) {
-            return 'restarting';
-        }
-        return 'stopped';
-    }
-
     public function get($containerId)
     {
         try {
+            $stateMapper = new DockerStateMapper();
+
             $container = $this->docker->getContainerManager()->find($containerId);
             $result = [
                 'id'    => $container->getId(),
-                'state' => $this->getStateFromContainer($container),
+                'state' => $stateMapper->mapContainerState($container),
                 'pereulok' => !empty($container->getConfig()->getLabels()['lfs-pereulok']),
-                'image' => $container->getConfig()->getImage(),
+                'image' => $this->dockerImage->getImageName($container->getConfig()->getImage()),
             ];
 
             $result = array_merge(
@@ -219,7 +212,7 @@ class LfsServerService
             $basePath = $this->getLfsConfigPath($container);
             $originalConfig = LfsConfigParser::readConfig($basePath);
 
-            if (($param = $this->getParamThatRequriresContainerRecreation($config, $originalConfig)) !== false) {
+            if (($param = $this->getParamThatRequiresContainerRecreation($config, $originalConfig)) !== false) {
                 throw new LsnException("Changing {$param} parameter require migration method", 409);
             }
 
@@ -247,10 +240,9 @@ class LfsServerService
         try {
             $this->xServer->runIfStopped();
 
-            $lfsImage = $config['image'];
+            $lfsImage = $this->dockerImage->getImageId($config['image']);
             $port = $config['port'];
             $configDir = $port . '-' . time();
-            $this->validateImage($lfsImage);
 
 
             //        if ($this->isContainerExists($this->getContainerName($serverName))) {
@@ -326,17 +318,6 @@ class LfsServerService
     }
 
     /**
-     * @param $lfsImage
-     * @throws LsnException
-     */
-    private function validateImage($lfsImage)
-    {
-        if (!$this->dockerImage->hasImage($lfsImage)) {
-            throw new LsnException("Lfs image '$lfsImage' is not found)");
-        }
-    }
-
-    /**
      * @return \Docker\API\Model\ContainerInfo[]|\Psr\Http\Message\ResponseInterface
      */
     public function findAllLfsContainers($state = null)
@@ -364,7 +345,7 @@ class LfsServerService
      * @param $config
      * @param $originalConfig
      */
-    private function getParamThatRequriresContainerRecreation($config, $originalConfig)
+    private function getParamThatRequiresContainerRecreation($config, $originalConfig)
     {
         $paramsRequireContainerRecreation = ['image', 'pereulok', 'port'];
 
@@ -389,6 +370,22 @@ class LfsServerService
             if ($containerInfo->getState() == 'running') {
                 $this->stop($containerInfo->getId());
             }
+        }
+    }
+
+    public function deleteAllTestContainers()
+    {
+        $containerInfos = $this->docker->getContainerManager()->findAll([
+            'filters' => json_encode([
+                'label' => ['lfs-server', 'is-testing'],
+            ])
+        ]);
+
+        foreach ($containerInfos as $containerInfo) {
+            if ($containerInfo->getState() == 'running') {
+                $this->stop($containerInfo->getId());
+            }
+            $this->delete($containerInfo->getId());
         }
     }
 
