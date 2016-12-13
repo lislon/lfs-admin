@@ -84,6 +84,12 @@ class LfsHttpServiceTest extends BaseTestCase
         $this->assertEquals('lislon test', $json['host']);
     }
 
+    public function testDeleteNotExistence()
+    {
+        $response = $this->runApp('DELETE', '/servers/not-existed', self::serverTemplate);
+        $this->assertResponse(404, $response);
+    }
+
     public function testPatch()
     {
         $config = [
@@ -144,6 +150,7 @@ class LfsHttpServiceTest extends BaseTestCase
 //        $response = $this->runApp('POST', "/servers/$id/start");
 //        $this->assertResponse(200, $response);
 //    }
+
 
     public function testShowServer()
     {

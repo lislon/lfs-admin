@@ -110,6 +110,9 @@ class LfsServerService
             LfsConfigParser::cleanFiles($this->getLfsConfigPath($container));
 
         } catch (HttpException $e) {
+            if ($e->getCode() == 404) {
+                throw new LsnNotFoundException("Container with id='$containerId' not found");
+            }
             throw new LsnDockerException($e->getMessage(), $e);
         }
     }
