@@ -277,14 +277,18 @@ Content-Type: application/json
 
 ### Залить новую версию (image) сервера
 
+Для добавления новой версии сервера необходимо скачать с сайта LFS архив с выделенным сервером и передать его в API.
+
+В архиве обязательно должен находится файл DCon.exe
+Поддерживается zip и tgz архивы.
 
 Запрос:
 
 ``` http
 POST http://localhost:8080/server-images/0.6m
-Content-Type: application/gzip
+Content-Type: application/zip
 
-...<tgz file archive>...
+...<zip file archive>...
 ```
 
 Ответ:
