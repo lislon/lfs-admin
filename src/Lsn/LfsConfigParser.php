@@ -35,7 +35,6 @@ class LfsConfigParser
     ];
 
     const validExtraParams = [
-        'pereulok',
         'image'
     ];
 

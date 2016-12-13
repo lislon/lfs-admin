@@ -143,7 +143,6 @@ class LfsServerService
             $result = [
                 'id'    => $container->getId(),
                 'state' => $stateMapper->mapContainerState($container),
-                'pereulok' => !empty($container->getConfig()->getLabels()['lfs-pereulok']),
                 'image' => $this->dockerImage->getImageName($container->getConfig()->getImage()),
             ];
 
@@ -295,12 +294,6 @@ class LfsServerService
                 $binds[] = "{$this->cfgBasePath}/$configDir/$file:/lfs/$file";
             }
 
-            if (!empty($config['pereulok'])) {
-                $binds[] = "{$this->lfsBasePath}/$lfsImage/launcher_lic.cf:/lfs/launcher_lic.cf:ro";
-                $binds[] = "{$this->lfsBasePath}/lfspLauncher.exe:/lfs/LFSP.exe:ro";
-                $labels['lfs-pereulok'] = 'yes';
-            }
-
             $containerConfig->setLabels(new \ArrayObject($labels));
             $hostConfig->setBinds($binds);
             try {
@@ -353,7 +346,7 @@ class LfsServerService
      */
     private function getParamThatRequiresContainerRecreation($config, $originalConfig)
     {
-        $paramsRequireContainerRecreation = ['image', 'pereulok', 'port'];
+        $paramsRequireContainerRecreation = ['image', 'port'];
 
         foreach ($paramsRequireContainerRecreation as $param) {
             if (isset($config[$param]) && !(isset($originalConfig[$param]) || $config[$param] != $originalConfig[$param])) {

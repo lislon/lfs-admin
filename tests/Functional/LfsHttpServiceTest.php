@@ -16,7 +16,6 @@ class LfsHttpServiceTest extends BaseTestCase
         'image' => LfsImageHttpServiceTest::IMAGE_NAME,
         'host' => 'lislon test',
         'usemaster' => 'no',
-        'pereulok' => false,
         'admin' => 'admin',
         'pass' => 'test',
     ];
@@ -155,7 +154,6 @@ class LfsHttpServiceTest extends BaseTestCase
 
         $this->assertArrayHasKey('id', $json);
         $this->assertEquals('lislon test', $json['host']);
-        $this->assertEquals(false, $json['pereulok']);
         $this->assertEquals('stopped', $json['state']);
         $this->assertEquals(LfsImageHttpServiceTest::IMAGE_NAME, $json['image']);
         $this->assertEquals('test', $json['pass']);

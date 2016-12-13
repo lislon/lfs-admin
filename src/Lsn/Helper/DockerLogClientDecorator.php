@@ -35,7 +35,7 @@ class DockerLogClientDecorator extends DockerClient
      */
     public function sendRequest(RequestInterface $request)
     {
-        $this->logger->info("docker {$request->getUri()} {$request->getBody()}");
+        $this->logger->debug("docker {$request->getUri()} {$request->getBody()}");
         return $this->client->sendRequest($request);
     }
 }

@@ -142,7 +142,6 @@ Content-Type: application/json
   "player": "test lsn server",
   "welcome": "Hey! \nThis is test server"
   "tracks": ["FE2", "FE3"],
-  "pereulok": true,
 }
 ```
 
@@ -421,7 +420,7 @@ server {
     php_admin_flag[log_errors] = on
 
     ; Set session path to a directory owned by process user
-    php_value[max_execution_time ] = 300
+    php_value[max_execution_time] = 300
     php_value[session.save_handler] = files
     php_value[session.save_path]    = /opt/lfsadmin/session
     php_value[soap.wsdl_cache_dir]  = /opt/lfsadmin/wsdlcache
