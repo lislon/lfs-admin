@@ -57,7 +57,7 @@ class LfsImageHttpServiceTest extends BaseTestCase
         // make sure image will be rebuilt
         file_put_contents($tempDir->getPath() . "/DCon.exe", "");
         file_put_contents($tempDir->getPath() . "/test.txt", "This is test\n");
-        file_put_contents($tempDir->getPath() . "/log.log", "This is test\n");
+        file_put_contents($tempDir->getPath() . "/deb.log", "This is test\n");
         mkdir($tempDir->getPath()."/data");
         file_put_contents($tempDir->getPath() . "/data/test.txt", "This is test inside data\n");
         return $tempDir;
@@ -66,65 +66,29 @@ class LfsImageHttpServiceTest extends BaseTestCase
     public static function createTestImage(BaseTestCase $baseTestCase)
     {
         $body = self::getTestImageArchive();
-        $baseTestCase->runApp('POST', '/server-images/'.self::IMAGE_NAME, $body, 'application/gzip');
+        $baseTestCase->runApp('POST', '/server-images/'.self::IMAGE_NAME, $body, 'application/zip');
         return self::IMAGE_NAME;
     }
 
     private static function getTestImageArchive()
     {
-        $tempDir = self::prepareFolderWithImage();
-        $tempDir4Tar = self::$tempFiles->tempDir();
-
-        $tarArchive = "{$tempDir4Tar->getPath()}/archive.tgz";
-        $pharData = new \PharData($tarArchive);
-        $pharData->buildFromDirectory($tempDir->getPath());
-        $gzFile = $pharData->compress(\Phar::GZ);
-        $body = new LazyOpenStream($gzFile->getPath(), "r");
-//        $body = new RequestBody();
-//        $body->write(file_get_contents($gzFile->getPath()));
-//        $body->rewind();
-        return $body;
+        return new LazyOpenStream(__DIR__."/_fixtures/LfsDummyImage.zip", "r");
     }
 
     public function testCreateImage()
     {
         $body = self::getTestImageArchive();
 
-        $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $body, 'application/gzip');
+        $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $body, 'application/zip');
         $this->assertResponse(200, $response);
         $this->imageName = self::IMAGE_NAME;
     }
 
     public function testCreateImageWithZip()
     {
-        $tempDir = self::prepareFolderWithImage();
-        $tempFile = self::$tempFiles->tempFile(null, ".zip");
-        $zip = new \ZipArchive();
-        $zip->open($tempFile->getPath(), \ZipArchive::CREATE);
-        // Create recursive directory iterator
+        $body = self::getTestImageArchive();
 
-        /** @var SplFileInfo[] $files */
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($tempDir->getPath()),
-            RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        foreach ($files as $name => $file) {
-            // Skip directories (they would be added automatically)
-            if (!$file->isDir()) {
-                // Get real and relative path for current file
-                $filePath = $file->getRealPath();
-                $relativePath = substr($filePath, strlen($tempDir->getPath()) + 1);
-
-                // Add current file to archive
-                $zip->addFile($filePath, $relativePath);
-            }
-        }
-        $zip->close();
-
-        $lazyOpenStream = new LazyOpenStream($tempFile->getPath(), "r");
-
-        $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $lazyOpenStream, 'application/zip');
+        $response = $this->runApp('POST', '/server-images/' . self::IMAGE_NAME, $body, 'application/zip');
         $this->assertResponse(200, $response);
     }
 

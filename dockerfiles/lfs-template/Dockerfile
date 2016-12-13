@@ -11,13 +11,15 @@ RUN mkdir /lfs
 ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
 
-USER xclient
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/bin/bash", "/start.sh"]
-
 # dicrectory lfs will be created by php
 COPY lfs /lfs
 
-#RUN chown -R xclient /lfs
+RUN chown -R xclient /lfs
 
+USER xclient
+
+# update ~/.wine directory
+RUN wine /usr/lib/i386-linux-gnu/wine/fakedlls/rundll32.exe
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/bin/bash", "/start.sh"]

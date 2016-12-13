@@ -11,6 +11,7 @@ namespace Lsn;
 
 use Docker\API\Model\ContainerConfig;
 use Docker\API\Model\HostConfig;
+use Docker\API\Model\NetworkConfig;
 use Docker\Docker;
 use Docker\Manager\ContainerManager;
 use Http\Client\Exception\HttpException;

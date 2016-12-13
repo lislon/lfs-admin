@@ -70,8 +70,13 @@ $app->get('/server-images', function ($request, $response, $args) {
 });
 
 $app->post('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {
-    $result = $this->get('lfsImage')->createImage($args['name'], $request->getBody());
+    $result = $this->get('lfsImage')->createImage($args['name'], $request->getBody(), $request->getContentType());
     return $response->withJson($result);
+});
+
+$app->delete('/server-images', function (ServerRequestInterface $request, $response, $args) {
+    $this->get('lfsImage')->deleteAllImages();
+    return $response->withStatus(204);
 });
 
 $app->delete('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {

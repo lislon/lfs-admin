@@ -15,4 +15,4 @@ fi
 
 sleep 1
 echo "Done. Read logs..."
-tail -f log.log
+tail -f deb.log

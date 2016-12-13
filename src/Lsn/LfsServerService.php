@@ -57,9 +57,12 @@ class LfsServerService
     public function getLogs($containerId)
     {
         try {
-            return ['logs' => DockerUtils::readContainerFile($this->docker, $containerId, '/lfs/log.log')];
+            return ['logs' => DockerUtils::readContainerFile($this->docker, $containerId, '/lfs/deb.log')];
 
         } catch (HttpException $e) {
+            if ($e->getCode() == 404) {
+                throw new LsnNotFoundException("File /lfs/deb.log is not found in container.");
+            }
             throw new LsnDockerException($e->getMessage(), $e);
         }
     }
@@ -240,6 +243,8 @@ class LfsServerService
         try {
             $this->xServer->runIfStopped();
 
+            $config = $this->validateCreateParams($config);
+
             $lfsImage = $this->dockerImage->getImageId($config['image']);
             $port = $config['port'];
             $configDir = $port . '-' . time();
@@ -269,6 +274,7 @@ class LfsServerService
                 "$port/udp" => [["HostPort" => "$port"]]
             ]);
             $hostConfig->setVolumesFrom(["xserver"]);
+            $hostConfig->setLinks(["xserver:xserver"]);
 
             $restartPolicy = new RestartPolicy();
             $restartPolicy->setMaximumRetryCount(2);
@@ -387,6 +393,21 @@ class LfsServerService
             }
             $this->delete($containerInfo->getId());
         }
+    }
+
+    /**
+     * @param $config
+     * @return mixed
+     * @throws LsnException
+     */
+    private function validateCreateParams($config)
+    {
+        foreach (['image'] as $key) {
+            if (!isset($config[$key])) {
+                throw new LsnException("Key '$key' is required");
+            }
+        }
+        return $config;
     }
 
 }

@@ -16,7 +16,7 @@ class LfsHttpServiceTest extends BaseTestCase
         'image' => LfsImageHttpServiceTest::IMAGE_NAME,
         'host' => 'lislon test',
         'usemaster' => 'no',
-        'pereulok' => true,
+        'pereulok' => false,
         'admin' => 'admin',
         'pass' => 'test',
     ];
@@ -107,11 +107,17 @@ class LfsHttpServiceTest extends BaseTestCase
         $response = $this->runApp('POST', "/servers/$id/start");
         $this->assertResponse(200, $response);
 
-        $response = $this->runApp('GET', "/servers/$id/logs");
+        for ($i = 0; $i < 10; $i++) {
+            sleep(1);
+            $response = $this->runApp('GET', "/servers/$id/logs");
+            if ($response->getStatusCode() != 404) {
+                break;
+            }
+        }
 
         $this->assertResponse(200, $response);
         $json = json_decode($response->getBody(), true);
-        $this->assertRegExp("/This is test/", $json['logs']);
+        $this->assertRegExp("/Dummy/", $json['logs']);
     }
 
     public function testGetStats()
@@ -149,7 +155,7 @@ class LfsHttpServiceTest extends BaseTestCase
 
         $this->assertArrayHasKey('id', $json);
         $this->assertEquals('lislon test', $json['host']);
-        $this->assertEquals(true, $json['pereulok']);
+        $this->assertEquals(false, $json['pereulok']);
         $this->assertEquals('stopped', $json['state']);
         $this->assertEquals(LfsImageHttpServiceTest::IMAGE_NAME, $json['image']);
         $this->assertEquals('test', $json['pass']);

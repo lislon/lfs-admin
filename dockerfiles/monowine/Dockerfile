@@ -1,11 +1,12 @@
 FROM suchja/wine:dev
 MAINTAINER Igor Avdeev
 
-USER xclient
 USER root
 
 RUN apt-get update
 RUN apt-get install -y mono-devel
+RUN echo "xclient:docker" | chpasswd && adduser xclient sudo
+
 RUN rm -rf /tmp/*
 RUN mkdir /lfs
 

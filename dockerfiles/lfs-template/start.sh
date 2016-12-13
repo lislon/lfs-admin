@@ -2,12 +2,6 @@
 
 cd /lfs
 
-if [[ -f "test.txt" ]] ; then
-    echo "running test"
-    tail -f test.txt
-    exit
-fi
-
 if [[ -f "LFSP.exe" ]] ; then
     echo "Start Pereulok"
     wine LFSP.exe
@@ -16,7 +10,15 @@ else
     wine DCon.exe
 fi
 
-sleep 1
+c=5
+while [[ ! -f "deb.log" && $c -gt 0 ]] ; do
+    c=$((c - 1))
+    sleep 1
+done
 
-echo "Done. Read logs..."
-tail -f log.log
+if [[ -f "deb.log" ]] ; then
+    tail -f deb.log
+else
+    echo "Serve not started. Can't find deb.log file"
+    sleep 3600
+fi

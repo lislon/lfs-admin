@@ -30,6 +30,7 @@ use Psr\Http\Message\StreamInterface;
 class LfsImageService
 {
     private $lfsBasePath;
+    // Hashtable with keys as API images names and id's is real names
     private $images = null;
 
     /**
@@ -44,7 +45,7 @@ class LfsImageService
     }
 
     /**
-     * Gets list of availiable lfs images.
+     * Gets list of available lfs images.
      *
      * @return string[] List of image
      */
@@ -56,7 +57,7 @@ class LfsImageService
         $result = [];
         foreach ($this->images as $name => $id) {
             $result[] = [
-                "id" => $id,
+                "id" => $name,
                 "name" => $name
             ];
         }
@@ -94,6 +95,26 @@ class LfsImageService
         return $imageName;
     }
 
+    public function deleteAllImages()
+    {
+        try {
+            $images = $this->dockerImage->findAll(['filters' => json_encode(['label' => ['lfs-server']])]);
+            foreach ($images as /** \Docker\API\Model\ImageItem */ $image) {
+                try {
+                    $this->dockerImage->remove($image->getId());
+                } catch (HttpException $e) {
+                    if ($e->getCode() == 409) {
+                        throw new LsnNotFoundException("Can't delete image with name '{$image->getId()}'. Probably containers that using this image is still exist");
+                    }
+                    throw $e;
+                }
+            }
+        } catch (HttpException $e) {
+            throw $e;
+        }
+
+    }
+
     /**
      * Deletes image from docker
      *
@@ -115,15 +136,16 @@ class LfsImageService
 
     /**
      *
-     * @param $name
-     * @param $stream StreamInterface
+     * @param string $name
+     * @param StreamInterface $stream
+     * @param string $contentType Mime Content type (application/gzip)
      * @return array
      * @throws LsnException
      * @throws \Exception
      */
-    public function createImage($name, StreamInterface $stream)
+    public function createImage($name, StreamInterface $stream, $contentType)
     {
-        $imageId = 'lfs-'.strtolower(trim(preg_replace('/[^a-zA-Q0-9_]/', '-', $name), "_"));
+        $imageId = 'lfs-dedi-'.strtolower(preg_replace('/[^\w]/', '', $name));
 
         $dockerTempDir = new TempDir("lfs-image");
         if (!@mkdir("{$dockerTempDir->getPath()}/lfs")) {
@@ -131,7 +153,7 @@ class LfsImageService
         }
 
         // unpack incoming tgz to /lfs directory
-        $inTgzFile = $this->saveStreamToFile($stream);
+        $inTgzFile = $this->saveStreamToFile($stream, $contentType);
 
         $this->unpackTgzToDirectory($inTgzFile, $dockerTempDir);
         $this->copyDockerFileToDirectory($dockerTempDir);
@@ -160,8 +182,10 @@ class LfsImageService
         foreach ($images as /** \Docker\API\Model\ImageItem */ $image) {
             if (isset($image->getLabels()->name)) {
                 $id = explode(":", $image->getRepoTags()[0])[0];
-                $name = $image->getLabels()->name;
-                $this->images[$name] = $id;
+                if ($id != '<none>') {
+                    $name = $image->getLabels()->name;
+                    $this->images[$name] = $id;
+                }
             }
         }
     }
@@ -185,9 +209,14 @@ class LfsImageService
      * @param StreamInterface $stream
      * @return TempFile
      */
-    private function saveStreamToFile(StreamInterface $stream)
+    private function saveStreamToFile(StreamInterface $stream, $contentType)
     {
-        $inTgzFile = new TempFile(null, '.tgz');
+        if ($contentType == 'application/zip') {
+            $extension = '.zip';
+        } else {
+            $extension = ".tgz";
+        }
+        $inTgzFile = new TempFile(null, $extension);
         $writeStream = new LazyOpenStream($inTgzFile->getPath(), 'w');
         \GuzzleHttp\Psr7\copy_to_stream($stream, $writeStream);
         return $inTgzFile;
@@ -198,12 +227,30 @@ class LfsImageService
      * @param $dockerTempDir
      * @throws LsnException
      */
-    private function unpackTgzToDirectory($inTgzFile, $dockerTempDir)
+    private function unpackTgzToDirectory(TempFile $inTgzFile, TempDir $dockerTempDir)
     {
-        $inPharData = new \PharData($inTgzFile->getPath());
-        $inPharData->extractTo("{$dockerTempDir->getPath()}/lfs");
-        if (!file_exists("{$dockerTempDir->getPath()}/lfs/DCon.exe")) {
+        if (preg_match('/zip$/', $inTgzFile->getPath())) {
+            $zip = new \ZipArchive;
+            if ($zip->open($inTgzFile->getPath()) === TRUE) {
+                $zip->extractTo($dockerTempDir->getPath()."/lfs");
+                $zip->close();
+            } else {
+                throw new LsnException("Failed to unzip {$inTgzFile->getPath()}");
+            }
+        } else {
+            $inPharData = new \PharData($inTgzFile->getPath());
+            $inPharData->extractTo("{$dockerTempDir->getPath()}/lfs");
+        }
+        $filename = "{$dockerTempDir->getPath()}/lfs/DCon.exe";
+        if (!file_exists($filename)) {
             throw new LsnException("Archive should contain DCon.exe file");
+        }
+        $filetype = system("file -- ".escapeshellarg($filename));
+        if (!preg_match('/PE32\+? executable/', $filetype)) {
+            throw new LsnException("DCon.exe is not PE32 executable, but '$filetype'");
+        }
+        if (!preg_match('/80386/', $filetype)) {
+            throw new LsnException("DCon.exe is not 32 bit executable ('$filetype')");
         }
     }
 
