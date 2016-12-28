@@ -7,11 +7,14 @@ RUN apt-get update
 RUN apt-get install -y mono-devel
 RUN rm -rf /tmp/*
 RUN mkdir /lfs
+RUN echo "xclient:docker" | chpasswd && adduser xclient sudo
+COPY waitonprocess.sh /scripts/
+RUN chmod +x /scripts/waitonprocess.sh
 
 ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
 
-# dicrectory lfs will be created by php
+# directory lfs will be created by php
 COPY lfs /lfs
 
 RUN chown -R xclient /lfs

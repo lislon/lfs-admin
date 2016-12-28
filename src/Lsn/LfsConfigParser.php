@@ -170,7 +170,7 @@ class LfsConfigParser
      * @param $cfg array Server configuration associative array
      * @throws LsnException
      */
-    public static function writeConfig($basePath, $cfg)
+    public static function writeConfig($basePath, array $cfg)
     {
         foreach ($cfg as $key => $value) {
             if (!in_array($key, self::validLfsParams) && !in_array($key, self::validExtraParams)) {

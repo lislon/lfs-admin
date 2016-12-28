@@ -43,22 +43,26 @@ class XServerService
         $this->docker = $docker;
     }
 
+    /**
+     * Ensures that X11 container exists, and then start it if ti's stopped
+     *
+     * @throws LsnException
+     */
     public function runIfStopped()
     {
         if ($this->isRunning) {
             return;
         }
         try {
-            $containerState = null;
 
-            $existing = $this->getExistingContainer();
-            if ($existing) {
-                $containerState = $existing->getState();
+            $existingContainer = $this->getExistingContainer();
+            if ($existingContainer) {
+                $containerState = $existingContainer->getState();
+                if (!$containerState->getRunning()) {
+                    $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
+                }
             } else {
                 $this->createContainer();
-                $containerState = 'created';
-            }
-            if (!$containerState->getRunning()) {
                 $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
             }
             $this->isRunning = true;
