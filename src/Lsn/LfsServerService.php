@@ -100,7 +100,7 @@ class LfsServerService
 
             // Stop container if necessary
             if ($mapper->mapContainerState($container) != 'stopped') {
-                throw new LsnException("Server should be stopped prior to deleting", 409);
+                throw new LsnException("Server should be stopped prior to deleting of container ($containerId)", 409);
             }
 
             $containerManager = $this->docker->getContainerManager();
@@ -369,7 +369,7 @@ class LfsServerService
         ]);
 
         foreach ($containerInfos as $containerInfo) {
-            if ($containerInfo->getState() == 'running') {
+            if (in_array($containerInfo->getState(), ['running', 'restarting'])) {
                 $this->stop($containerInfo->getId());
             }
         }
@@ -384,7 +384,7 @@ class LfsServerService
         ]);
 
         foreach ($containerInfos as $containerInfo) {
-            if ($containerInfo->getState() == 'running') {
+            if (in_array($containerInfo->getState(), ['running', 'restarting'])) {
                 $this->stop($containerInfo->getId());
             }
             $this->delete($containerInfo->getId());
