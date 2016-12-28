@@ -98,8 +98,8 @@ class LfsConfigParser
     {
         $stat = [];
 
-        foreach (explode(PHP_EOL, $contents) as $line) {
-            list($name, $val) = explode("=", $line);
+        foreach (explode("\n", trim($contents)) as $line) {
+            list($name, $val) = explode("=", trim($line));
             $stat[$name] = $val;
         }
 
