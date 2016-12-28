@@ -40,29 +40,6 @@ class LfsImageHttpServiceTest extends BaseTestCase
         self::$tempFiles->cleanTempFiles();
     }
 
-
-    /**
-     * @return TempDir
-     * @throws \Exception
-     * @throws \Naucon\File\Exception\FileException
-     */
-    private static function prepareFolderWithImage()
-    {
-        if (!self::$tempFiles) {
-            self::$tempFiles = new TempFilesMixin();
-        }
-        // create dummy image
-        $tempDir = self::$tempFiles->tempDir("lfs-test-image");
-        (new File($tempDir->getPath() . "/DCon.exe"))->createNewFile();
-        // make sure image will be rebuilt
-        file_put_contents($tempDir->getPath() . "/DCon.exe", "");
-        file_put_contents($tempDir->getPath() . "/test.txt", "This is test\n");
-        file_put_contents($tempDir->getPath() . "/deb.log", "This is test\n");
-        mkdir($tempDir->getPath()."/data");
-        file_put_contents($tempDir->getPath() . "/data/test.txt", "This is test inside data\n");
-        return $tempDir;
-    }
-
     public static function createTestImage(BaseTestCase $baseTestCase)
     {
         $body = self::getTestImageArchive();

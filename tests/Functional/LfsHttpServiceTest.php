@@ -125,22 +125,6 @@ class LfsHttpServiceTest extends BaseTestCase
         $this->assertRegExp("/Dummy/", $json['logs']);
     }
 
-    public function testGetStats()
-    {
-        $this->markTestIncomplete();
-
-        $id = $this->createServer();
-        $response = $this->runApp('POST', "/servers/$id/start");
-        $this->assertResponse(200, $response);
-
-
-        $response = $this->runApp('GET', "/servers/$id/stats");
-
-        $this->assertResponse(200, $response);
-        $json = json_decode($response->getBody(), true);
-        $this->assertRegExp("/lislon test/", $json['host']);
-    }
-
 //    public function testDoubleStartServer()
 //    {
 //        $id = $this->createServer();
