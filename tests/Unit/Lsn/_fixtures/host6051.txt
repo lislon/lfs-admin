@@ -1,0 +1,12 @@
+lfs=0.6Q
+status=online
+guests=0
+maxguests=1
+host=lsntest
+pass=test
+usemaster=yes
+trackcfg=BL2
+cars=11000000100000000000
+qual=1
+laps=1
+conn=host

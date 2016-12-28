@@ -20,4 +20,11 @@ class LfsConfigManagerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("^7LSN TEST", $config['host']);
         $this->assertEquals(["AU1", "AU1x"], $config['tracks']);
     }
+
+    public function testParseStats()
+    {
+        $config = LfsConfigParser::parseStats(file_get_contents(__DIR__."/_fixtures/host6051.txt"));
+        $this->assertEquals("test", $config['pass']);
+    }
 }
+
