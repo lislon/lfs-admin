@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 
 /**
  * Compile with  /usr/bin/i686-w64-mingw32-gcc ./DCon.c -o ./DCon.exe && zip -r LfsDummyImage.zip DCon.exe
@@ -12,5 +13,8 @@ int main()
   }
   fprintf(fp, "Dummy server started\n");
   fclose(fp);
+
+  // emulate working of server
+  sleep(300);
   return 0;
 }
