@@ -18,7 +18,6 @@ use Tests\Helper\TempFilesMixin;
  */
 class LfsImageHttpServiceTest extends BaseTestCase
 {
-
     const IMAGE_NAME = 'test-0.6Q';
 
     private $imageName = null;
@@ -34,7 +33,6 @@ class LfsImageHttpServiceTest extends BaseTestCase
         }
     }
 
-
     protected function tearDown()
     {
         self::$tempFiles->cleanTempFiles();
@@ -49,7 +47,7 @@ class LfsImageHttpServiceTest extends BaseTestCase
 
     private static function getTestImageArchive()
     {
-        return new LazyOpenStream(__DIR__."/_fixtures/LfsDummyImage.zip", "r");
+        return new LazyOpenStream(__DIR__."/_fixtures/DummyLfsServer/LfsDummyImage.zip", "r");
     }
 
     public function testCreateImage()
