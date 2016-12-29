@@ -199,11 +199,16 @@ class LfsServerService
     }
 
 
+    /**
+     * Stops the container.
+     *
+     * @param $containerId
+     * @throws LsnException
+     */
     public function stop($containerId)
     {
         try {
             $this->docker->getContainerManager()->stop($containerId);
-
         } catch (HttpException $e) {
             throw new LsnException($e->getMessage(), $e);
         }
@@ -344,8 +349,13 @@ class LfsServerService
     }
 
     /**
+     * Returns the name of LFS server parameter, that is being altered, but will require recreation of container.
+     *
+     * For example if we change server port, we should recreate container and this method will return string 'port'
+     *
      * @param $config
      * @param $originalConfig
+     * @returns string|boolean name of altered parameter or false if no fundamental parameters is changed.
      */
     private function getParamThatRequiresContainerRecreation($config, $originalConfig)
     {
@@ -358,7 +368,10 @@ class LfsServerService
         }
         return false;
     }
-    
+
+    /**
+     * Stops all containers that were created during unit tests
+     */
     public function stopAllTestContainers()
     {
         $containerInfos = $this->docker->getContainerManager()->findAll([
@@ -375,6 +388,9 @@ class LfsServerService
         }
     }
 
+    /**
+     * Deletes all containers that were created during unit tests.
+     */
     public function deleteAllTestContainers()
     {
         $containerInfos = $this->docker->getContainerManager()->findAll([
