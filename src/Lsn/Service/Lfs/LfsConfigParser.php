@@ -6,7 +6,7 @@
  * Time: 5:06 PM
  */
 
-namespace Lsn;
+namespace Lsn\Service\Lfs;
 
 
 use Lsn\Exception\LsnException;

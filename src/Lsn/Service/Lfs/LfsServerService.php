@@ -1,22 +1,21 @@
 <?php
 
-namespace Lsn;
+namespace Lsn\Service\Lfs;
 
 use Docker\API\Model\Container;
+use Docker\API\Model\ContainerConfig;
 use Docker\API\Model\ContainerInfo;
-use Docker\API\Model\ContainerState;
 use Docker\API\Model\HostConfig;
-use Docker\API\Model\NetworkConfig;
-use Docker\API\Model\NetworkCreateConfig;
 use Docker\API\Model\RestartPolicy;
 use Docker\Docker;
-use Docker\API\Model\ContainerConfig;
-use Http\Client\Common\Exception\ClientErrorException;
 use Http\Client\Exception\HttpException;
+use Lsn\DockerNetwork;
+use Lsn\DockerStateMapper;
 use Lsn\Exception\LsnDockerException;
 use Lsn\Exception\LsnException;
 use Lsn\Exception\LsnNotFoundException;
 use Lsn\Helper\DockerUtils;
+use Lsn\Service\Aux\XServerService;
 
 /**
  * Class controlling creation, starting and stopping of docker containers for LFS server.

@@ -64,6 +64,8 @@ $app->delete('/servers/{id}', function ($request, Response $response, $args) {
     return $response->withStatus(204);
 });
 
+// SERVER IMAGES
+
 $app->get('/server-images', function ($request, $response, $args) {
     $list = $this->get('lfsImage')->getImages();
     return $response->withJson($list);
@@ -76,5 +78,24 @@ $app->post('/server-images/{name}', function (ServerRequestInterface $request, $
 
 $app->delete('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {
     $this->get('lfsImage')->deleteImage($args['name']);
+    return $response->withStatus(204);
+});
+
+
+// INSIM
+
+
+$app->get('/insim-images', function ($request, $response, $args) {
+    $list = $this->get('insimImage')->getImages();
+    return $response->withJson($list);
+});
+
+$app->post('/insim-images/{name}', function (ServerRequestInterface $request, $response, $args) {
+    $result = $this->get('insimImage')->createImage($args['name'], $request->getBody(), $request->getContentType());
+    return $response->withJson($result);
+});
+
+$app->delete('/insim-images/{name}', function (ServerRequestInterface $request, $response, $args) {
+    $this->get('insimImage')->deleteImage($args['name']);
     return $response->withStatus(204);
 });

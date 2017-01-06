@@ -1,4 +1,5 @@
 <?php
+
 return [
     'settings' => [
         'displayErrorDetails' => true, // set to false in production
@@ -19,6 +20,7 @@ return [
         'env' => 'testing',
 
         'docker' => [
+            'dockerfiles_path' => __DIR__.'/dockerfiles',
             'buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data',
         ]
 

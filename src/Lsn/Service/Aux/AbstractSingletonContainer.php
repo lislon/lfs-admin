@@ -2,45 +2,41 @@
 /**
  * Created by PhpStorm.
  * User: ele
- * Date: 11/16/16
- * Time: 11:48 AM
+ * Date: 1/4/17
+ * Time: 3:12 PM
  */
 
-namespace Lsn;
+namespace Lsn\Service\Aux;
 
 
 use Docker\API\Model\ContainerConfig;
 use Docker\API\Model\HostConfig;
-use Docker\API\Model\NetworkConfig;
 use Docker\Docker;
-use Docker\Manager\ContainerManager;
 use Http\Client\Exception\HttpException;
 use Lsn\Exception\LsnDockerException;
 use Lsn\Exception\LsnException;
 
-/**
- * This class runs docker X11 Server for LFS servers.
- *
- * Class XServerService
- * @package Lsn
- */
-class XServerService
+abstract class AbstractSingletonContainer
 {
-    const CONTAINER_NAME = 'xserver';
-
-    private $port = 5900;
-    private $password = "docker";
+    private $env;
+    private $portExpose;
 
     private $docker;
     private $isRunning = null;
+    private $containerName;
+    private $imageName;
 
     /**
      * XServerService constructor.
      * @param $docker
      */
-    public function __construct(Docker $docker)
+    protected function __construct(Docker $docker, $imageName, $containerName, $env = array(), $portExpose = null)
     {
         $this->docker = $docker;
+        $this->containerName = $containerName;
+        $this->imageName = $imageName;
+        $this->env = $env;
+        $this->portExpose = $portExpose;
     }
 
     /**
@@ -59,15 +55,15 @@ class XServerService
             if ($existingContainer) {
                 $containerState = $existingContainer->getState();
                 if (!$containerState->getRunning()) {
-                    $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
+                    $this->docker->getContainerManager()->start($this->containerName);
                 }
             } else {
                 $this->createContainer();
-                $this->docker->getContainerManager()->start(self::CONTAINER_NAME);
+                $this->docker->getContainerManager()->start($this->containerName);
             }
             $this->isRunning = true;
         } catch (HttpException $e) {
-            throw  new LsnException("Failed to create xserver: " . $e->getMessage());
+            throw new LsnException("Failed to create {$this->containerName}: " . $e->getMessage());
         }
     }
 
@@ -79,7 +75,7 @@ class XServerService
     private function getExistingContainer()
     {
         try {
-            return $this->docker->getContainerManager()->find(self::CONTAINER_NAME);
+            return $this->docker->getContainerManager()->find($this->containerName);
         } catch (HttpException $e) {
             if ($e->getCode() == 404) {
                 return null;
@@ -93,25 +89,26 @@ class XServerService
         try {
             $containerManager = $this->docker->getContainerManager();
 
-            $containerConfig= new ContainerConfig();
-            $containerConfig->setImage('x11server');
-            $containerConfig->setEnv(["VNC_PASSWORD={$this->password}"]);
+            $containerConfig = new ContainerConfig();
+            $containerConfig->setImage($this->imageName);
+            $containerConfig->setEnv($this->env);
 
             $hostConfig = new HostConfig();
             $hostConfig->setPortBindings([
-                "{$this->port}" => [["HostPort" => "{$this->port}"]],
+                "{$this->portExpose}" => [["HostPort" => "{$this->portExpose}"]],
             ]);
 
             $containerConfig->setHostConfig($hostConfig);
             $containerConfig->setExposedPorts([
-                "{$this->port}" => new \ArrayObject(),
+                "{$this->portExpose}" => new \ArrayObject(),
             ]);
 
-            $container = $containerManager->create($containerConfig, ['name' => self::CONTAINER_NAME]);
+            $container = $containerManager->create($containerConfig, ['name' => $this->containerName]);
 
             return $container->getId();
         } catch (HttpException $e) {
             throw new LsnDockerException($e->getMessage(), $e);
+
         }
     }
 }

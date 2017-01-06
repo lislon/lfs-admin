@@ -2,10 +2,6 @@
 
 namespace Tests\Functional;
 
-use Lsn\Helper\TempDir;
-use Naucon\File\File;
-use Slim\Http\RequestBody;
-
 class LfsHttpServiceTest extends BaseTestCase
 {
     private $serverId = null;

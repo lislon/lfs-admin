@@ -29,13 +29,19 @@ $container['docker'] = function ($c) {
 
 $container['lfsServer'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $xServer = new \Lsn\XServerService($c->get('docker'));
-    $service = new \Lsn\LfsServerService($c->get('docker'), $settings, $xServer, $c->get('settings')['env']);
+    $xServer = new \Lsn\Service\Aux\XServerService($c->get('docker'));
+    $service = new \Lsn\Service\Lfs\LfsServerService($c->get('docker'), $settings, $xServer, $c->get('settings')['env']);
     return $service;
 };
 
 $container['lfsImage'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $service = new \Lsn\LfsImageService($c->get('docker'), $settings);
+    $service = new \Lsn\Service\Lfs\LfsImageService($c->get('docker'), $settings);
     return $service;
 };
+
+$container['insimImage'] = function ($c) {
+    $service = new \Lsn\Service\Insim\InsimImageService($c->get('docker'));
+    return $service;
+};
+

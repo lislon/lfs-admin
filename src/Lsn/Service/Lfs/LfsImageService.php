@@ -6,19 +6,18 @@
  * Time: 4:12 PM
  */
 
-namespace Lsn;
+namespace Lsn\Service\Lfs;
 use Docker\Context\Context;
 use Docker\Docker;
 use Docker\Manager\ImageManager;
-use Docker\Stream\BuildStream;
 use GuzzleHttp\Psr7\LazyOpenStream;
-use GuzzleHttp\Psr7\Stream;
 use Http\Client\Exception\HttpException;
 use Lsn\Exception\LsnException;
 use Lsn\Exception\LsnNotFoundException;
 use Lsn\Helper\RecursiveDirCopy;
 use Lsn\Helper\TempDir;
 use Lsn\Helper\TempFile;
+use Lsn\Service\Interfaces\ImageService;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -27,9 +26,10 @@ use Psr\Http\Message\StreamInterface;
  * Class LfsImageService
  * @package Lsn
  */
-class LfsImageService
+class LfsImageService implements ImageService
 {
-    private $lfsBasePath;
+    private $settings;
+
     // Hashtable with keys as API images names and id's is real names
     private $images = null;
 
@@ -41,7 +41,7 @@ class LfsImageService
     public function __construct(Docker $docker, $dockerSettings)
     {
         $this->dockerImage = $docker->getImageManager();
-        $this->lfsBasePath = $dockerSettings['buildPath']."/lfsdata";
+        $this->settings = $dockerSettings;
     }
 
     /**
@@ -158,8 +158,6 @@ class LfsImageService
         $this->unpackTgzToDirectory($inTgzFile, $dockerTempDir);
         $this->copyDockerFileToDirectory($dockerTempDir);
 
-//         now pack it back to archive to send for docker
-//        $this->packDirectoryToTgz($dockerTempDir);
 
         $context = new Context($dockerTempDir->getPath());
         $inputStream = $context->toStream();
@@ -241,17 +239,7 @@ class LfsImageService
             $inPharData = new \PharData($inTgzFile->getPath());
             $inPharData->extractTo("{$dockerTempDir->getPath()}/lfs");
         }
-        $filename = "{$dockerTempDir->getPath()}/lfs/DCon.exe";
-        if (!file_exists($filename)) {
-            throw new LsnException("Archive should contain DCon.exe file");
-        }
-        $filetype = system("file -- ".escapeshellarg($filename));
-        if (!preg_match('/PE32\+? executable/', $filetype)) {
-            throw new LsnException("DCon.exe is not PE32 executable, but '$filetype'");
-        }
-        if (!preg_match('/80386/', $filetype)) {
-            throw new LsnException("DCon.exe is not 32 bit executable ('$filetype')");
-        }
+        $this->validateArchive($dockerTempDir);
     }
 
     /**
@@ -259,6 +247,26 @@ class LfsImageService
      */
     private function copyDockerFileToDirectory($dockerTempDir)
     {
-        RecursiveDirCopy::copy(realpath(__DIR__ . '/../../dockerfiles/lfs-template/'), $dockerTempDir->getPath());
+        RecursiveDirCopy::copy($this->settings['dockerfiles_path'].'/lfs-template/', $dockerTempDir->getPath());
+    }
+
+    /**
+     * Checks if folder contain LFS server distribution, otherwise throws exception
+     * @param TempDir $dockerTempDir
+     * @throws LsnException
+     */
+    private function validateArchive(TempDir $dockerTempDir)
+    {
+        $filename = "{$dockerTempDir->getPath()}/lfs/DCon.exe";
+        if (!file_exists($filename)) {
+            throw new LsnException("Archive should contain DCon.exe file");
+        }
+        $filetype = system("file -- " . escapeshellarg($filename));
+        if (!preg_match('/PE32\+? executable/', $filetype)) {
+            throw new LsnException("DCon.exe is not PE32 executable, but '$filetype'");
+        }
+        if (!preg_match('/80386/', $filetype)) {
+            throw new LsnException("DCon.exe is not 32 bit executable ('$filetype')");
+        }
     }
 }

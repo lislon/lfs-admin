@@ -6,10 +6,11 @@
  * Time: 4:25 PM
  */
 
-namespace Tests\Unit\Lsn;
+namespace Tests\Unit\Lsn\Service\Lfs;
 
 
-use Lsn\LfsConfigParser;
+
+use Lsn\Service\Lfs\LfsConfigParser;
 
 class LfsConfigManagerTest extends \PHPUnit_Framework_TestCase
 {
