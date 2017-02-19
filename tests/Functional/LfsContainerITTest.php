@@ -2,14 +2,14 @@
 
 namespace Tests\Functional;
 
-class LfsHttpServiceTest extends BaseTestCase
+class LfsContainerITTest extends BaseTestCase
 {
     private $serverId = null;
     private $imageCreated = null;
 
     const serverTemplate = [
         'port' => 58999,
-        'image' => LfsImageHttpServiceTest::IMAGE_NAME,
+        'image' => LfsImageITTest::IMAGE_NAME,
         'host' => 'lislon test',
         'usemaster' => 'no',
         'admin' => 'admin',
@@ -31,7 +31,7 @@ class LfsHttpServiceTest extends BaseTestCase
     {
         if ($this->imageCreated == null) {
             // ensure we have build image
-            LfsImageHttpServiceTest::createTestImage($this);
+            LfsImageITTest::createTestImage($this);
             $this->imageCreated = true;
         }
     }
@@ -142,7 +142,7 @@ class LfsHttpServiceTest extends BaseTestCase
         $this->assertArrayHasKey('id', $json);
         $this->assertEquals('lislon test', $json['host']);
         $this->assertEquals('stopped', $json['state']);
-        $this->assertEquals(LfsImageHttpServiceTest::IMAGE_NAME, $json['image']);
+        $this->assertEquals(LfsImageITTest::IMAGE_NAME, $json['image']);
         $this->assertEquals('test', $json['pass']);
     }
 

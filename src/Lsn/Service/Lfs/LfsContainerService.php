@@ -14,8 +14,9 @@ use Lsn\DockerStateMapper;
 use Lsn\Exception\LsnDockerException;
 use Lsn\Exception\LsnException;
 use Lsn\Exception\LsnNotFoundException;
+use Lsn\Helper\DockerImageManager;
 use Lsn\Helper\DockerUtils;
-use Lsn\Service\Aux\XServerService;
+use Lsn\Service\Aux\XServerContainerService;
 
 /**
  * Class controlling creation, starting and stopping of docker containers for LFS server.
@@ -23,7 +24,7 @@ use Lsn\Service\Aux\XServerService;
  * Class LfsServerService
  * @package Lsn
  */
-class LfsServerService
+class LfsContainerService
 {
     private $docker;
     private $dockerSettings;
@@ -39,9 +40,10 @@ class LfsServerService
      * LfsServerService constructor.
      * @param Docker $docker
      * @param $dockerSettings
-     * @param XServerService $displayService Service for running x11 server for LFS boxes
+     * @param $dockerImage LfsImageService Docker image service for Lfs
+     * @param XServerContainerService $displayService Service for running x11 server for LFS boxes
      */
-    public function __construct(Docker $docker, $dockerSettings, XServerService $displayService, $env)
+    public function __construct(Docker $docker, $dockerSettings, XServerContainerService $displayService, DockerImageManager $dockerImage, $env)
     {
         $this->docker = $docker;
         $this->dockerSettings = $dockerSettings;
@@ -50,7 +52,7 @@ class LfsServerService
         $this->isTesting = $env == 'test';
         $this->xServer = $displayService;
         $this->dockerNetwork = new DockerNetwork($docker);
-        $this->dockerImage = new LfsImageService($docker, $dockerSettings);
+        $this->dockerImage = $dockerImage;
     }
     
     public function getLogs($containerId)
@@ -275,9 +277,14 @@ class LfsServerService
             }
 
             $hostConfig = new HostConfig();
+            if ($port > 10000) {
+                throw new LsnException("Port should be < 10000 (because of easy fix for insim integration)");
+            }
+            $insimPort = 50000 + $port;
             $hostConfig->setPortBindings([
                 "$port/tcp" => [["HostPort" => "$port"]],
-                "$port/udp" => [["HostPort" => "$port"]]
+                "$port/udp" => [["HostPort" => "$port"]],
+                "$insimPort/tcp" => [["HostPort" => "$insimPort"]]
             ]);
             $hostConfig->setVolumesFrom(["xserver"]);
             $hostConfig->setLinks(["xserver:xserver"]);
@@ -290,7 +297,8 @@ class LfsServerService
             $containerConfig->setHostConfig($hostConfig);
             $containerConfig->setExposedPorts([
                 "$port/tcp" => new \ArrayObject(),
-                "$port/udp" => new \ArrayObject()
+                "$port/udp" => new \ArrayObject(),
+                "$insimPort/tcp" => new \ArrayObject(),
             ]);
 
             LfsConfigParser::writeConfig("{$this->cfgBasePath}/$configDir", $config);

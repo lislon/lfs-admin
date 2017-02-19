@@ -67,17 +67,17 @@ $app->delete('/servers/{id}', function ($request, Response $response, $args) {
 // SERVER IMAGES
 
 $app->get('/server-images', function ($request, $response, $args) {
-    $list = $this->get('lfsImage')->getImages();
+    $list = $this->get('lfsImageManager')->getImages();
     return $response->withJson($list);
 });
 
 $app->post('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {
-    $result = $this->get('lfsImage')->createImage($args['name'], $request->getBody(), $request->getContentType());
+    $result = $this->get('lfsImageManager')->buildImage($args['name'], $request->getBody(), $request->getContentType());
     return $response->withJson($result);
 });
 
 $app->delete('/server-images/{name}', function (ServerRequestInterface $request, $response, $args) {
-    $this->get('lfsImage')->deleteImage($args['name']);
+    $this->get('lfsImageManager')->deleteImage($args['name']);
     return $response->withStatus(204);
 });
 

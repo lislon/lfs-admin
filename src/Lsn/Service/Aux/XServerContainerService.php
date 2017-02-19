@@ -9,6 +9,7 @@
 namespace Lsn\Service\Aux;
 
 use Docker\Docker;
+use Lsn\Helper\DockerImageManager;
 
 /**
  * This class runs docker X11 Server for LFS servers.
@@ -16,7 +17,7 @@ use Docker\Docker;
  * Class XServerService
  * @package Lsn
  */
-class XServerService extends AbstractSingletonContainer
+class XServerContainerService extends AbstractSingletonContainer
 {
     const CONTAINER_NAME = 'xserver';
     const VNC_PASSWORD = 'docker';
@@ -25,8 +26,11 @@ class XServerService extends AbstractSingletonContainer
      * XServerService constructor.
      * @param $docker
      */
-    public function __construct(Docker $docker)
+    public function __construct(Docker $docker, DockerImageManager $builderContainer)
     {
+        if (!$builderContainer->hasImage(self::CONTAINER_NAME)) {
+            $builderContainer->buildStaticImage(self::CONTAINER_NAME);
+        }
         parent::__construct($docker, 'xserver', self::CONTAINER_NAME, ["VNC_PASSWORD=".self::VNC_PASSWORD], 5900);
     }
 }

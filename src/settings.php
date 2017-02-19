@@ -20,7 +20,7 @@ return [
         'env' => 'testing',
 
         'docker' => [
-            'dockerfiles_path' => __DIR__.'/dockerfiles',
+            'dockerfiles_path' => realpath(__DIR__.'/../dockerfiles'),
             'buildPath' => '/home/ele/src-dropbox/docker/lfs/build-data',
         ]
 

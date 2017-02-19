@@ -11,7 +11,7 @@ namespace Lsn\Service\Aux;
 
 use Docker\Docker;
 
-class MysqlService extends AbstractSingletonContainer
+class MysqlContainerService extends AbstractSingletonContainer
 {
     const CONTAINER_NAME = 'mysql';
     const ROOT_PASSWORD = 'toor';

@@ -15,7 +15,7 @@ ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
 
 # directory lfs will be created by php
-COPY lfs /lfs
+COPY content /lfs
 
 RUN chown -R xclient /lfs
 

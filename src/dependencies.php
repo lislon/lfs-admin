@@ -29,19 +29,27 @@ $container['docker'] = function ($c) {
 
 $container['lfsServer'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $xServer = new \Lsn\Service\Aux\XServerService($c->get('docker'));
-    $service = new \Lsn\Service\Lfs\LfsServerService($c->get('docker'), $settings, $xServer, $c->get('settings')['env']);
+    $xServer = new \Lsn\Service\Aux\XServerContainerService($c->get('docker'), $c->get('xserverImageBuilder'));
+    $service = new \Lsn\Service\Lfs\LfsContainerService($c->get('docker'), $settings, $xServer, $c->get('lfsImageManager'), $c->get('settings')['env']);
     return $service;
 };
 
-$container['lfsImage'] = function ($c) {
+$container['xserverImageBuilder'] = function ($c) {
     $settings = $c->get('settings')['docker'];
-    $service = new \Lsn\Service\Lfs\LfsImageService($c->get('docker'), $settings);
+
+    $service = new \Lsn\Helper\DockerImageManager('x11server', $settings['dockerfiles_path'].'/x11server', $c->get('imageManager'));
     return $service;
 };
 
-$container['insimImage'] = function ($c) {
-    $service = new \Lsn\Service\Insim\InsimImageService($c->get('docker'));
+$container['lfsImageManager'] = function ($c) {
+    $settings = $c->get('settings')['docker'];
+    $service = new \Lsn\Helper\DockerImageManager('lfs-server', $settings['dockerfiles_path'].'/lfs-server', $c->get('imageManager'));
+
+    $service->setImageValidator(new \Lsn\Validator\LfsImageValidator());
     return $service;
+};
+
+$container['imageManager'] = function ($c) {
+    return $c->get('docker')->getImageManager();
 };
 

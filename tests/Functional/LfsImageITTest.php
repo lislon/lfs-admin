@@ -16,7 +16,7 @@ use Tests\Helper\TempFilesMixin;
  * Date: 11/22/16
  * Time: 5:13 PM
  */
-class LfsImageHttpServiceTest extends BaseTestCase
+class LfsImageITTest extends BaseTestCase
 {
     const IMAGE_NAME = 'test-0.6Q';
 
@@ -41,7 +41,10 @@ class LfsImageHttpServiceTest extends BaseTestCase
     public static function createTestImage(BaseTestCase $baseTestCase)
     {
         $body = self::getTestImageArchive();
-        $baseTestCase->runApp('POST', '/server-images/'.self::IMAGE_NAME, $body, 'application/zip');
+        $response = $baseTestCase->runApp('POST', '/server-images/'.self::IMAGE_NAME, $body, 'application/zip');
+        if (!($response->getStatusCode() >= 200 && $response->getStatusCode() <= 299)) {
+            throw new \Exception($response->getBody());
+        }
         return self::IMAGE_NAME;
     }
 

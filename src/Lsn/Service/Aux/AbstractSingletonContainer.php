@@ -15,6 +15,7 @@ use Docker\Docker;
 use Http\Client\Exception\HttpException;
 use Lsn\Exception\LsnDockerException;
 use Lsn\Exception\LsnException;
+use Lsn\Helper\DockerImageManager;
 
 abstract class AbstractSingletonContainer
 {

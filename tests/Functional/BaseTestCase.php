@@ -108,12 +108,12 @@ class BaseTestCase extends \PHPUnit_Framework_TestCase
         return $response;
     }
 
-    protected function assertResponse($expected, Response $response)
+    protected static function assertResponse($expected, Response $response)
     {
         if ($expected != $response->getStatusCode()) {
             $error = json_decode($response->getBody(), true);
 
-            $this->assertEquals($expected, $response->getStatusCode(), isset($error['message']) ? $error['message'] : null);
+            self::assertEquals($expected, $response->getStatusCode(), isset($error['message']) ? $error['message'] : null);
         }
     }
 }
